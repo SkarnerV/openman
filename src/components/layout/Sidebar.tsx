@@ -5,15 +5,23 @@ import {
   Clock,
   ChevronDown,
   Plus,
+  Trash2,
 } from "lucide-react";
 import { useState } from "react";
+import { useRequestStore } from "../../stores/useRequestStore";
+import type { HttpRequest } from "../../stores/useRequestStore";
 
 interface SidebarProps {
   activeTab: "http" | "grpc" | "mcp";
   onTabChange: (tab: "http" | "grpc" | "mcp") => void;
+  onSelectRequest?: (request: HttpRequest) => void;
 }
 
-export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
+export function Sidebar({
+  activeTab,
+  onTabChange,
+  onSelectRequest,
+}: SidebarProps) {
   const [expandedSections, setExpandedSections] = useState<
     Record<string, boolean>
   >({
@@ -21,11 +29,45 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
     history: true,
   });
 
+  const { requestHistory, clearHistory } = useRequestStore();
+
   const toggleSection = (section: string) => {
     setExpandedSections((prev) => ({
       ...prev,
       [section]: !prev[section],
     }));
+  };
+
+  const getMethodColor = (method: string) => {
+    switch (method) {
+      case "GET":
+        return "text-green-500";
+      case "POST":
+        return "text-yellow-500";
+      case "PUT":
+        return "text-blue-500";
+      case "PATCH":
+        return "text-purple-500";
+      case "DELETE":
+        return "text-red-500";
+      default:
+        return "text-muted-foreground";
+    }
+  };
+
+  const formatUrl = (url: string) => {
+    try {
+      const urlObj = new URL(url);
+      return urlObj.pathname + urlObj.search;
+    } catch {
+      return url;
+    }
+  };
+
+  const handleHistoryItemClick = (request: HttpRequest) => {
+    if (onSelectRequest) {
+      onSelectRequest(request);
+    }
   };
 
   return (
@@ -113,18 +155,59 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
             <div className="flex items-center gap-2">
               <Clock className="w-4 h-4 text-muted-foreground" />
               History
+              {requestHistory.length > 0 && (
+                <span className="text-xs text-muted-foreground">
+                  ({requestHistory.length})
+                </span>
+              )}
             </div>
-            <ChevronDown
-              className={`w-4 h-4 text-muted-foreground transition-transform ${
-                expandedSections.history ? "" : "-rotate-90"
-              }`}
-            />
+            <div className="flex items-center gap-1">
+              {requestHistory.length > 0 && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    clearHistory();
+                  }}
+                  className="p-1 rounded hover:bg-muted/50"
+                  title="Clear History"
+                >
+                  <Trash2 className="w-3 h-3 text-muted-foreground" />
+                </button>
+              )}
+              <ChevronDown
+                className={`w-4 h-4 text-muted-foreground transition-transform ${
+                  expandedSections.history ? "" : "-rotate-90"
+                }`}
+              />
+            </div>
           </button>
           {expandedSections.history && (
-            <div className="pb-2">
-              <div className="px-4 py-1.5 text-sm text-muted-foreground hover:bg-muted/50 cursor-pointer">
-                No history yet
-              </div>
+            <div className="pb-2 max-h-64 overflow-auto">
+              {requestHistory.length === 0 ? (
+                <div className="px-4 py-1.5 text-sm text-muted-foreground">
+                  No history yet
+                </div>
+              ) : (
+                requestHistory.map((request) => (
+                  <div
+                    key={request.id}
+                    onClick={() => handleHistoryItemClick(request)}
+                    className="px-3 py-1.5 text-sm hover:bg-muted/50 cursor-pointer flex items-center gap-2 group"
+                  >
+                    <span
+                      className={`font-mono text-xs ${getMethodColor(request.method)}`}
+                    >
+                      {request.method.padEnd(6)}
+                    </span>
+                    <span
+                      className="truncate text-xs flex-1"
+                      title={request.url}
+                    >
+                      {formatUrl(request.url)}
+                    </span>
+                  </div>
+                ))
+              )}
             </div>
           )}
         </div>

@@ -18,6 +18,7 @@ export function HttpPanel() {
     setResponse,
     setLoading,
     setError,
+    addToHistory,
   } = useRequestStore();
 
   // Local state for the request being edited
@@ -94,6 +95,7 @@ export function HttpPanel() {
     try {
       const result = await sendHttpRequest(request);
       setResponse(result);
+      addToHistory(request);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Request failed");
     } finally {
@@ -109,6 +111,7 @@ export function HttpPanel() {
     setLoading,
     setError,
     setResponse,
+    addToHistory,
   ]);
 
   const addHeader = () => {
