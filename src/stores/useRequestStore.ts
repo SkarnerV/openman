@@ -1,11 +1,19 @@
 import { create } from "zustand";
 
+export interface QueryParam {
+  key: string;
+  value: string;
+  description?: string;
+  enabled: boolean;
+}
+
 export interface HttpRequest {
   id: string;
   name: string;
   description?: string;
   method: HttpMethod;
   url: string;
+  params?: QueryParam[];
   headers: Header[];
   body?: RequestBody;
   auth?: AuthConfig;

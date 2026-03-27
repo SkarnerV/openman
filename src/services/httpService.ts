@@ -1,5 +1,30 @@
 import { invoke } from "@tauri-apps/api/core";
 import type { HttpRequest, HttpResponse } from "../stores";
+import { useEnvironmentStore } from "../stores/useEnvironmentStore";
+
+// Variable substitution - replaces {{variable}} with values from active environment
+function substituteVariables(text: string, variables: Map<string, string>): string {
+  return text.replace(/\{\{([^}]+)\}\}/g, (match, key) => {
+    const trimmedKey = key.trim();
+    const value = variables.get(trimmedKey);
+    return value !== undefined ? value : match;
+  });
+}
+
+function getActiveVariables(): Map<string, string> {
+  const variables = new Map<string, string>();
+  const activeEnv = useEnvironmentStore.getState().activeEnvironment;
+
+  if (activeEnv?.variables) {
+    activeEnv.variables
+      .filter((v) => v.enabled)
+      .forEach((v) => {
+        variables.set(v.key, v.value);
+      });
+  }
+
+  return variables;
+}
 
 // Transform frontend request format to backend format
 interface RustHttpRequest {
@@ -49,16 +74,19 @@ interface RustHttpResponse {
   responseSize: number;
 }
 
-function transformRequest(request: HttpRequest): RustHttpRequest {
+function transformRequest(request: HttpRequest, variables: Map<string, string>): RustHttpRequest {
+  // Apply variable substitution
+  const substitutedUrl = substituteVariables(request.url, variables);
+
   const rustRequest: RustHttpRequest = {
     id: request.id,
     name: request.name,
     description: request.description,
     method: request.method,
-    url: request.url,
+    url: substitutedUrl,
     headers: request.headers.map((h) => ({
       key: h.key,
-      value: h.value,
+      value: substituteVariables(h.value, variables),
       description: h.description,
       enabled: h.enabled,
     })),
@@ -70,43 +98,44 @@ function transformRequest(request: HttpRequest): RustHttpRequest {
 
   // Transform body
   if (request.body && request.body.mode !== "none") {
+    const substitutedBody = substituteVariables(request.body.content, variables);
     if (request.body.mode === "json") {
       rustRequest.body = {
         mode: "json",
-        content: request.body.content,
+        content: substitutedBody,
       };
     } else if (request.body.mode === "raw") {
       rustRequest.body = {
         mode: "raw",
-        content: request.body.content,
+        content: substitutedBody,
         language: request.body.rawLanguage || "text",
       };
     } else {
       rustRequest.body = {
         mode: request.body.mode,
-        content: request.body.content,
+        content: substitutedBody,
       };
     }
   }
 
-  // Transform auth
+  // Transform auth with variable substitution
   if (request.auth && request.auth.type !== "none") {
     if (request.auth.type === "bearer") {
       rustRequest.auth = {
         type: "bearer",
-        token: request.auth.token,
+        token: substituteVariables(request.auth.token, variables),
       };
     } else if (request.auth.type === "basic") {
       rustRequest.auth = {
         type: "basic",
-        username: request.auth.username,
-        password: request.auth.password,
+        username: substituteVariables(request.auth.username, variables),
+        password: substituteVariables(request.auth.password, variables),
       };
     } else if (request.auth.type === "api-key") {
       rustRequest.auth = {
         type: "api-key",
-        key: request.auth.key,
-        value: request.auth.value,
+        key: substituteVariables(request.auth.key, variables),
+        value: substituteVariables(request.auth.value, variables),
         addTo: request.auth.addTo,
       };
     }
@@ -129,7 +158,8 @@ function transformResponse(response: RustHttpResponse): HttpResponse {
 export async function sendHttpRequest(
   request: HttpRequest,
 ): Promise<HttpResponse> {
-  const rustRequest = transformRequest(request);
+  const variables = getActiveVariables();
+  const rustRequest = transformRequest(request, variables);
   const response = await invoke<RustHttpResponse>("send_http_request", {
     request: rustRequest,
   });

@@ -1,61 +1,72 @@
 import { create } from "zustand";
-
-export interface Workspace {
-  id: string;
-  name: string;
-  description?: string;
-  createdAt: string;
-  updatedAt: string;
-  settings: WorkspaceSettings;
-}
-
-export interface WorkspaceSettings {
-  theme: "light" | "dark" | "system";
-  fontSize: number;
-  tabSize: number;
-}
+import {
+  getDefaultWorkspace,
+  getWorkspaces,
+  createWorkspace as createWorkspaceApi,
+  type Workspace,
+} from "../services/storageService";
 
 interface WorkspaceState {
   workspaces: Workspace[];
-  activeWorkspace: Workspace | null;
+  currentWorkspace: Workspace | null;
   isLoading: boolean;
   error: string | null;
-  setWorkspaces: (workspaces: Workspace[]) => void;
-  setActiveWorkspace: (workspace: Workspace | null) => void;
-  addWorkspace: (workspace: Workspace) => void;
-  removeWorkspace: (id: string) => void;
-  updateWorkspace: (id: string, updates: Partial<Workspace>) => void;
-  setLoading: (loading: boolean) => void;
-  setError: (error: string | null) => void;
+  initialized: boolean;
+
+  // Actions
+  initialize: () => Promise<void>;
+  loadWorkspaces: () => Promise<void>;
+  setCurrentWorkspace: (workspace: Workspace) => void;
+  createWorkspace: (name: string, description?: string) => Promise<Workspace>;
 }
 
-export const useWorkspaceStore = create<WorkspaceState>((set) => ({
+export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   workspaces: [],
-  activeWorkspace: null,
+  currentWorkspace: null,
   isLoading: false,
   error: null,
-  setWorkspaces: (workspaces) => set({ workspaces }),
-  setActiveWorkspace: (workspace) => set({ activeWorkspace: workspace }),
-  addWorkspace: (workspace) =>
+  initialized: false,
+
+  initialize: async () => {
+    if (get().initialized) return;
+
+    set({ isLoading: true, error: null });
+    try {
+      const workspace = await getDefaultWorkspace();
+      set({
+        currentWorkspace: workspace,
+        isLoading: false,
+        initialized: true,
+      });
+    } catch (err) {
+      set({
+        error: err instanceof Error ? err.message : "Failed to load workspace",
+        isLoading: false,
+      });
+    }
+  },
+
+  loadWorkspaces: async () => {
+    try {
+      const workspaces = await getWorkspaces();
+      set({ workspaces });
+    } catch (err) {
+      console.error("Failed to load workspaces:", err);
+    }
+  },
+
+  setCurrentWorkspace: (workspace) => {
+    set({ currentWorkspace: workspace });
+  },
+
+  createWorkspace: async (name: string, description?: string) => {
+    const workspace = await createWorkspaceApi(name, description);
     set((state) => ({
       workspaces: [...state.workspaces, workspace],
-    })),
-  removeWorkspace: (id) =>
-    set((state) => ({
-      workspaces: state.workspaces.filter((w) => w.id !== id),
-      activeWorkspace:
-        state.activeWorkspace?.id === id ? null : state.activeWorkspace,
-    })),
-  updateWorkspace: (id, updates) =>
-    set((state) => ({
-      workspaces: state.workspaces.map((w) =>
-        w.id === id ? { ...w, ...updates } : w,
-      ),
-      activeWorkspace:
-        state.activeWorkspace?.id === id
-          ? { ...state.activeWorkspace, ...updates }
-          : state.activeWorkspace,
-    })),
-  setLoading: (isLoading) => set({ isLoading }),
-  setError: (error) => set({ error }),
+    }));
+    return workspace;
+  },
 }));
+
+// Export type for use in other stores
+export type { Workspace };

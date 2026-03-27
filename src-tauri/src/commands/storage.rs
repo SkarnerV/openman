@@ -15,8 +15,20 @@ pub fn create_workspace(name: String, description: Option<String>) -> Result<Wor
 }
 
 #[command]
+pub fn get_default_workspace() -> Result<Workspace, String> {
+    storage::workspace::get_or_create_default_workspace().map_err(|e| e.to_string())
+}
+
+// Collection commands
+
+#[command]
 pub fn get_collections(workspace_id: String) -> Result<Vec<Collection>, String> {
     storage::collection::get_collections(&workspace_id).map_err(|e| e.to_string())
+}
+
+#[command]
+pub fn get_collection(workspace_id: String, collection_id: String) -> Result<Collection, String> {
+    storage::collection::get_collection(&workspace_id, &collection_id).map_err(|e| e.to_string())
 }
 
 #[command]
@@ -30,8 +42,31 @@ pub fn create_collection(
 }
 
 #[command]
+pub fn update_collection(
+    workspace_id: String,
+    collection: Collection,
+) -> Result<(), String> {
+    storage::collection::update_collection(&workspace_id, &collection).map_err(|e| e.to_string())
+}
+
+#[command]
+pub fn delete_collection(
+    workspace_id: String,
+    collection_id: String,
+) -> Result<(), String> {
+    storage::collection::delete_collection(&workspace_id, &collection_id).map_err(|e| e.to_string())
+}
+
+// Environment commands
+
+#[command]
 pub fn get_environments(workspace_id: String) -> Result<Vec<Environment>, String> {
     storage::environment::get_environments(&workspace_id).map_err(|e| e.to_string())
+}
+
+#[command]
+pub fn get_environment(workspace_id: String, environment_id: String) -> Result<Environment, String> {
+    storage::environment::get_environment(&workspace_id, &environment_id).map_err(|e| e.to_string())
 }
 
 #[command]
@@ -41,6 +76,33 @@ pub fn create_environment(
 ) -> Result<Environment, String> {
     storage::environment::create_environment(&workspace_id, &name).map_err(|e| e.to_string())
 }
+
+#[command]
+pub fn update_environment(
+    workspace_id: String,
+    environment: Environment,
+) -> Result<(), String> {
+    storage::environment::update_environment(&workspace_id, &environment).map_err(|e| e.to_string())
+}
+
+#[command]
+pub fn delete_environment(
+    workspace_id: String,
+    environment_id: String,
+) -> Result<(), String> {
+    storage::environment::delete_environment(&workspace_id, &environment_id).map_err(|e| e.to_string())
+}
+
+#[command]
+pub fn set_active_environment(
+    workspace_id: String,
+    environment_id: Option<String>,
+) -> Result<(), String> {
+    storage::environment::set_active_environment(&workspace_id, environment_id.as_deref())
+        .map_err(|e| e.to_string())
+}
+
+// Import/Export
 
 #[command]
 pub fn import_postman_collection(

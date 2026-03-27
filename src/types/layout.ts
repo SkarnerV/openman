@@ -1,8 +1,13 @@
-export interface MainContentProps {
-  activeTab: "http" | "grpc" | "mcp";
+import type { ActivityTab } from "../components/layout/ActivityBar";
+
+export interface ActivityBarProps {
+  activeTab: ActivityTab;
+  onTabChange: (tab: ActivityTab) => void;
 }
 
 export interface SidebarProps {
-  activeTab: "http" | "grpc" | "mcp";
-  onTabChange: (tab: "http" | "grpc" | "mcp") => void;
+  activeTab: ActivityTab;
+  onTabChange: (tab: ActivityTab) => void;
 }
+
+export type ViewMode = "request" | "collections" | "history" | "environments" | "settings";

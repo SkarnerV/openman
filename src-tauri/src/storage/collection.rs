@@ -1,9 +1,9 @@
-use crate::models::collection::{Collection, CollectionItem, Variable};
-use crate::models::request::HttpRequest;
-use crate::storage::{get_workspace_dir, read_json_file, write_json_file};
+use crate::models::collection::Collection;
+use crate::storage::{read_json_file, write_json_file, get_data_dir};
 use anyhow::Result;
 use chrono::Utc;
 use std::fs;
+use tauri::Manager;
 use uuid::Uuid;
 
 pub fn get_collections(workspace_id: &str) -> Result<Vec<Collection>> {
@@ -72,7 +72,9 @@ pub fn delete_collection(workspace_id: &str, collection_id: &str) -> Result<()> 
 }
 
 fn get_collections_dir(workspace_id: &str) -> Result<std::path::PathBuf> {
-    // Placeholder - in production we'd get the proper app handle
-    let workspace_dir = std::path::PathBuf::from(".openman").join("workspaces").join(workspace_id);
-    Ok(workspace_dir.join("collections"))
+    let app_handle = crate::APP_HANDLE.get().ok_or_else(|| {
+        anyhow::anyhow!("App handle not initialized")
+    })?;
+    let data_dir = get_data_dir(app_handle)?;
+    Ok(data_dir.join("workspaces").join(workspace_id).join("collections"))
 }

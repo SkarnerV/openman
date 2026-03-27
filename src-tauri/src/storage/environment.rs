@@ -1,8 +1,9 @@
-use crate::models::environment::{Environment, EnvironmentVariable};
-use crate::storage::{read_json_file, write_json_file};
+use crate::models::environment::Environment;
+use crate::storage::{read_json_file, write_json_file, get_data_dir};
 use anyhow::Result;
 use chrono::Utc;
 use std::fs;
+use tauri::Manager;
 use uuid::Uuid;
 
 pub fn get_environments(workspace_id: &str) -> Result<Vec<Environment>> {
@@ -63,7 +64,42 @@ pub fn delete_environment(workspace_id: &str, env_id: &str) -> Result<()> {
     Ok(())
 }
 
+pub fn set_active_environment(workspace_id: &str, active_env_id: Option<&str>) -> Result<()> {
+    let envs_dir = get_environments_dir(workspace_id)?;
+    if !envs_dir.exists() {
+        return Ok(());
+    }
+
+    // First, deactivate all environments
+    for entry in fs::read_dir(&envs_dir)? {
+        let entry = entry?;
+        let path = entry.path();
+        if path.extension().map(|e| e == "json").unwrap_or(false) {
+            if let Ok(mut env) = read_json_file::<Environment>(&path) {
+                env.is_active = false;
+                write_json_file(&path, &env)?;
+            }
+        }
+    }
+
+    // Then activate the specified environment
+    if let Some(env_id) = active_env_id {
+        let env_file = envs_dir.join(format!("{}.json", env_id));
+        if env_file.exists() {
+            if let Ok(mut env) = read_json_file::<Environment>(&env_file) {
+                env.is_active = true;
+                write_json_file(&env_file, &env)?;
+            }
+        }
+    }
+
+    Ok(())
+}
+
 fn get_environments_dir(workspace_id: &str) -> Result<std::path::PathBuf> {
-    let workspace_dir = std::path::PathBuf::from(".openman").join("workspaces").join(workspace_id);
-    Ok(workspace_dir.join("environments"))
+    let app_handle = crate::APP_HANDLE.get().ok_or_else(|| {
+        anyhow::anyhow!("App handle not initialized")
+    })?;
+    let data_dir = get_data_dir(app_handle)?;
+    Ok(data_dir.join("workspaces").join(workspace_id).join("environments"))
 }
