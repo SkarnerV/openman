@@ -83,7 +83,7 @@ function AppContent() {
   return (
     <div className="flex h-screen bg-page-bg text-text-primary overflow-hidden">
       <ActivityBar activeTab={activeTab} onTabChange={handleTabChange} />
-      <Sidebar activeTab={activeTab} onTabChange={handleTabChange} />
+      <Sidebar />
       <main className="flex-1 overflow-hidden">
         <Routes>
           <Route path="/" element={<Navigate to="/collections" replace />} />

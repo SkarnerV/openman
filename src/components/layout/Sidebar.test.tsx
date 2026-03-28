@@ -5,7 +5,6 @@ import { BrowserRouter } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { useCollectionStore } from '../../stores/useCollectionStore';
 import { useRequestStore } from '../../stores/useRequestStore';
-import { useEnvironmentStore } from '../../stores/useEnvironmentStore';
 
 const mockNavigate = vi.fn();
 vi.mock('react-router-dom', async () => {
@@ -21,8 +20,6 @@ const renderWithRouter = (component: React.ReactNode) => {
 };
 
 describe('Sidebar', () => {
-  const mockOnTabChange = vi.fn();
-
   beforeEach(() => {
     vi.clearAllMocks();
     mockNavigate.mockClear();
@@ -44,28 +41,20 @@ describe('Sidebar', () => {
       error: null,
       requestHistory: [],
     });
-
-    useEnvironmentStore.setState({
-      environments: [],
-      activeEnvironment: null,
-      isLoading: false,
-      error: null,
-      initialized: true,
-    });
   });
 
   it('renders the sidebar with app title', () => {
-    renderWithRouter(<Sidebar activeTab="collections" onTabChange={mockOnTabChange} />);
+    renderWithRouter(<Sidebar />);
     expect(screen.getByText('Openman')).toBeInTheDocument();
   });
 
   it('renders the search input', () => {
-    renderWithRouter(<Sidebar activeTab="collections" onTabChange={mockOnTabChange} />);
+    renderWithRouter(<Sidebar />);
     expect(screen.getByPlaceholderText('Search...')).toBeInTheDocument();
   });
 
   it('renders the New Request button', () => {
-    renderWithRouter(<Sidebar activeTab="collections" onTabChange={mockOnTabChange} />);
+    renderWithRouter(<Sidebar />);
     expect(screen.getByRole('button', { name: /new request/i })).toBeInTheDocument();
   });
 
@@ -92,7 +81,7 @@ describe('Sidebar', () => {
       requestHistory: [],
     });
 
-    renderWithRouter(<Sidebar activeTab="collections" onTabChange={mockOnTabChange} />);
+    renderWithRouter(<Sidebar />);
 
     const newRequestButton = screen.getByRole('button', { name: /new request/i });
     fireEvent.click(newRequestButton);
@@ -104,12 +93,12 @@ describe('Sidebar', () => {
   });
 
   it('renders Collections section', () => {
-    renderWithRouter(<Sidebar activeTab="collections" onTabChange={mockOnTabChange} />);
+    renderWithRouter(<Sidebar />);
     expect(screen.getByText('Collections')).toBeInTheDocument();
   });
 
   it('shows empty collections message when no collections', () => {
-    renderWithRouter(<Sidebar activeTab="collections" onTabChange={mockOnTabChange} />);
+    renderWithRouter(<Sidebar />);
     expect(screen.getByText(/no collections yet/i)).toBeInTheDocument();
   });
 
@@ -129,7 +118,7 @@ describe('Sidebar', () => {
       initialized: true,
     });
 
-    renderWithRouter(<Sidebar activeTab="collections" onTabChange={mockOnTabChange} />);
+    renderWithRouter(<Sidebar />);
     expect(screen.getByText('Test Collection')).toBeInTheDocument();
   });
 
@@ -158,7 +147,7 @@ describe('Sidebar', () => {
       initialized: true,
     });
 
-    renderWithRouter(<Sidebar activeTab="collections" onTabChange={mockOnTabChange} />);
+    renderWithRouter(<Sidebar />);
 
     // Both collections should be visible
     expect(screen.getByText('API Collection')).toBeInTheDocument();
@@ -171,79 +160,5 @@ describe('Sidebar', () => {
     // Only API Collection should be visible
     expect(screen.getByText('API Collection')).toBeInTheDocument();
     expect(screen.queryByText('User Endpoints')).not.toBeInTheDocument();
-  });
-
-  it('renders Environment section', () => {
-    renderWithRouter(<Sidebar activeTab="collections" onTabChange={mockOnTabChange} />);
-    expect(screen.getByText('Environment')).toBeInTheDocument();
-  });
-
-  it('shows "No Environment" when no active environment', () => {
-    renderWithRouter(<Sidebar activeTab="collections" onTabChange={mockOnTabChange} />);
-    expect(screen.getByText('No Environment')).toBeInTheDocument();
-  });
-
-  it('shows active environment name', () => {
-    useEnvironmentStore.setState({
-      activeEnvironment: {
-        id: '1',
-        name: 'Production',
-        isActive: true,
-        variables: [],
-        createdAt: '2024-01-01T00:00:00Z',
-        updatedAt: '2024-01-01T00:00:00Z',
-      },
-      initialized: true,
-    });
-
-    renderWithRouter(<Sidebar activeTab="collections" onTabChange={mockOnTabChange} />);
-    expect(screen.getByText('Production')).toBeInTheDocument();
-  });
-
-  it('renders History button', () => {
-    renderWithRouter(<Sidebar activeTab="collections" onTabChange={mockOnTabChange} />);
-    expect(screen.getByRole('button', { name: /history/i })).toBeInTheDocument();
-  });
-
-  it('calls onTabChange with history when clicking History', async () => {
-    renderWithRouter(<Sidebar activeTab="collections" onTabChange={mockOnTabChange} />);
-
-    const historyButton = screen.getByRole('button', { name: /history/i });
-    fireEvent.click(historyButton);
-
-    expect(mockOnTabChange).toHaveBeenCalledWith('history');
-  });
-
-  it('renders Settings button', () => {
-    renderWithRouter(<Sidebar activeTab="collections" onTabChange={mockOnTabChange} />);
-    expect(screen.getByRole('button', { name: /settings/i })).toBeInTheDocument();
-  });
-
-  it('shows request count in history button', () => {
-    useRequestStore.setState({
-      requestHistory: [
-        {
-          id: '1',
-          name: 'GET /users',
-          method: 'GET',
-          url: 'https://api.example.com/users',
-          headers: [],
-          createdAt: '2024-01-01T00:00:00Z',
-          updatedAt: '2024-01-01T00:00:00Z',
-        },
-        {
-          id: '2',
-          name: 'POST /users',
-          method: 'POST',
-          url: 'https://api.example.com/users',
-          headers: [],
-          createdAt: '2024-01-01T00:00:00Z',
-          updatedAt: '2024-01-01T00:00:00Z',
-        },
-      ],
-    });
-
-    renderWithRouter(<Sidebar activeTab="collections" onTabChange={mockOnTabChange} />);
-    expect(screen.getByText('2')).toBeInTheDocument();
   });
 });

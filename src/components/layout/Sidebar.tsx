@@ -7,22 +7,13 @@ import {
   FolderOpen,
   ChevronRight,
   Globe,
-  History,
-  Settings,
   PanelLeft,
 } from "lucide-react";
 import { useCollectionStore, type Collection } from "../../stores/useCollectionStore";
 import { useRequestStore, type HttpRequest } from "../../stores/useRequestStore";
-import { useEnvironmentStore } from "../../stores/useEnvironmentStore";
 import { type CollectionItem, type RequestCollectionItem } from "../../services/storageService";
-import type { ActivityTab } from "./ActivityBar";
 
-interface SidebarProps {
-  activeTab: ActivityTab;
-  onTabChange: (tab: ActivityTab) => void;
-}
-
-export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
+export function Sidebar() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedCollections, setExpandedCollections] = useState<
@@ -30,8 +21,7 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
   >({});
 
   const { collections, createCollection, deleteCollection } = useCollectionStore();
-  const { requestHistory, setCurrentRequest, setResponse, setError } = useRequestStore();
-  const { activeEnvironment } = useEnvironmentStore();
+  const { setCurrentRequest, setResponse, setError } = useRequestStore();
 
   const toggleCollection = (collectionId: string) => {
     setExpandedCollections((prev) => ({
@@ -174,59 +164,6 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
             ))}
           </div>
         )}
-      </div>
-
-      {/* Spacer */}
-      <div className="flex-1" />
-
-      {/* Environment Dropdown */}
-      <div className="px-3 py-3 border-t border-elevated-bg">
-        <span className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
-          Environment
-        </span>
-        <button
-          onClick={() => onTabChange("environments")}
-          className="w-full flex items-center justify-between px-3 py-2.5 mt-2 bg-card-bg rounded-lg hover:bg-elevated-bg transition-colors"
-        >
-          <div className="flex items-center gap-2">
-            <Globe className="w-4 h-4 text-text-secondary" />
-            <span className="text-sm">
-              {activeEnvironment?.name || "No Environment"}
-            </span>
-          </div>
-          <ChevronDown className="w-4 h-4 text-text-secondary" />
-        </button>
-      </div>
-
-      {/* Bottom Navigation */}
-      <div className="border-t border-elevated-bg">
-        <button
-          onClick={() => onTabChange("history")}
-          className={`w-full flex items-center gap-2 px-4 py-3 text-sm transition-colors ${
-            activeTab === "history"
-              ? "bg-elevated-bg text-accent-teal"
-              : "text-text-secondary hover:bg-elevated-bg hover:text-text-primary"
-          }`}
-        >
-          <History className="w-4 h-4" />
-          History
-          {requestHistory.length > 0 && (
-            <span className="ml-auto text-xs bg-elevated-bg px-2 py-0.5 rounded">
-              {requestHistory.length}
-            </span>
-          )}
-        </button>
-        <button
-          onClick={() => onTabChange("settings")}
-          className={`w-full flex items-center gap-2 px-4 py-3 text-sm transition-colors ${
-            activeTab === "settings"
-              ? "bg-elevated-bg text-accent-orange"
-              : "text-text-secondary hover:bg-elevated-bg hover:text-text-primary"
-          }`}
-        >
-          <Settings className="w-4 h-4" />
-          Settings
-        </button>
       </div>
     </div>
   );
