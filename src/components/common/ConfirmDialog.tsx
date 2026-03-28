@@ -25,29 +25,29 @@ export function ConfirmDialog({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-card-bg border border-elevated-bg rounded-radius p-6 w-[400px]">
+      <div className="bg-card-bg border border-elevated-bg rounded-radius p-6 w-[400px] max-w-[90vw] overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+        <div className="flex items-center justify-between mb-4 min-w-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
               variant === "danger" ? "bg-delete-method/20" : "bg-accent-orange/20"
             }`}>
               <AlertTriangle className={`w-5 h-5 ${
                 variant === "danger" ? "text-delete-method" : "text-accent-orange"
               }`} />
             </div>
-            <h2 className="text-lg font-semibold font-display">{title}</h2>
+            <h2 className="text-lg font-semibold font-display truncate">{title}</h2>
           </div>
           <button
             onClick={onCancel}
-            className="p-2 hover:bg-elevated-bg rounded-radius transition-colors"
+            className="p-2 hover:bg-elevated-bg rounded-radius transition-colors shrink-0"
           >
             <X className="w-5 h-5 text-text-secondary" />
           </button>
         </div>
 
         {/* Message */}
-        <p className="text-text-secondary mb-6">{message}</p>
+        <p className="text-text-secondary mb-6 break-words">{message}</p>
 
         {/* Actions */}
         <div className="flex justify-end gap-3">

@@ -85,13 +85,13 @@ export function SaveRequestModal({ isOpen, onClose, request }: SaveRequestModalP
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-card-bg border border-elevated-bg rounded-radius p-6 w-[480px] max-h-[80vh] overflow-auto">
+      <div className="bg-card-bg border border-elevated-bg rounded-radius p-6 w-[480px] max-w-[90vw] overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-semibold font-display">Save Request</h2>
+        <div className="flex items-center justify-between mb-6 min-w-0">
+          <h2 className="text-lg font-semibold font-display truncate">Save Request</h2>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-elevated-bg rounded-radius transition-colors"
+            className="p-2 hover:bg-elevated-bg rounded-radius transition-colors shrink-0"
           >
             <X className="w-5 h-5 text-text-secondary" />
           </button>

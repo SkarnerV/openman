@@ -7,8 +7,6 @@ import {
   FolderOpen,
   ChevronRight,
   Globe,
-  PanelLeftClose,
-  PanelLeft,
 } from "lucide-react";
 import { useCollectionStore, type Collection } from "../../stores/useCollectionStore";
 import { useRequestStore, type HttpRequest } from "../../stores/useRequestStore";
@@ -28,7 +26,7 @@ export function Sidebar() {
     requestId?: string;
     name: string;
   } | null>(null);
-  const { sidebarVisible, toggleSidebar } = useSettingsStore();
+  const { sidebarVisible } = useSettingsStore();
 
   const { collections, createCollection, deleteCollection, deleteRequestFromCollection } = useCollectionStore();
   const { setCurrentRequest, setResponse, setError } = useRequestStore();
@@ -94,15 +92,7 @@ export function Sidebar() {
   );
 
   if (!sidebarVisible) {
-    return (
-      <button
-        onClick={toggleSidebar}
-        className="w-12 h-full bg-page-bg border-r border-elevated-bg flex items-center justify-center hover:bg-elevated-bg transition-colors"
-        title="Show sidebar"
-      >
-        <PanelLeft className="w-5 h-5 text-text-secondary" />
-      </button>
-    );
+    return null;
   }
 
   return (
@@ -132,20 +122,11 @@ export function Sidebar() {
       />
       <div className="w-[260px] h-full bg-page-bg flex flex-col border-r border-elevated-bg">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-4">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-accent-orange flex items-center justify-center">
-            <Globe className="w-5 h-5 text-text-on-accent" />
-          </div>
-          <span className="font-semibold text-lg font-display">Openman</span>
+      <div className="flex items-center gap-2 px-4 py-4">
+        <div className="w-8 h-8 rounded-lg bg-accent-orange flex items-center justify-center">
+          <Globe className="w-5 h-5 text-text-on-accent" />
         </div>
-        <button
-          onClick={toggleSidebar}
-          className="p-2 hover:bg-elevated-bg rounded-radius transition-colors"
-          title="Hide sidebar"
-        >
-          <PanelLeftClose className="w-4 h-4 text-text-secondary" />
-        </button>
+        <span className="font-semibold text-lg font-display">Openman</span>
       </div>
 
       {/* Search */}

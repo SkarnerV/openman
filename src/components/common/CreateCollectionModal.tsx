@@ -49,16 +49,16 @@ export function CreateCollectionModal({ isOpen, onClose, onCreate }: CreateColle
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-card-bg border border-elevated-bg rounded-radius p-6 w-[480px]">
+      <div className="bg-card-bg border border-elevated-bg rounded-radius p-6 w-[480px] max-w-[90vw] overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <FolderPlus className="w-5 h-5 text-accent-orange" />
-            <h2 className="text-lg font-semibold font-display">Create Collection</h2>
+        <div className="flex items-center justify-between mb-6 min-w-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <FolderPlus className="w-5 h-5 text-accent-orange shrink-0" />
+            <h2 className="text-lg font-semibold font-display truncate">Create Collection</h2>
           </div>
           <button
             onClick={handleClose}
-            className="p-2 hover:bg-elevated-bg rounded-radius transition-colors"
+            className="p-2 hover:bg-elevated-bg rounded-radius transition-colors shrink-0"
           >
             <X className="w-5 h-5 text-text-secondary" />
           </button>

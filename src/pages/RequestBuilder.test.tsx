@@ -71,8 +71,8 @@ describe('RequestBuilder', () => {
     });
 
     renderWithRouter(<RequestBuilder />);
-    const methodSelect = screen.getByRole('combobox');
-    expect(methodSelect).toHaveValue('GET');
+    // MethodSelect is now a button with the method name
+    expect(screen.getByRole('button', { name: /GET/i })).toBeInTheDocument();
   });
 
   it('renders the Send button', async () => {
@@ -146,9 +146,17 @@ describe('RequestBuilder', () => {
     });
 
     renderWithRouter(<RequestBuilder />);
-    const methodSelect = screen.getByRole('combobox');
-    await user.selectOptions(methodSelect, 'POST');
-    expect(methodSelect).toHaveValue('POST');
+
+    // Click on the method button to open the dropdown
+    const methodButton = screen.getByRole('button', { name: /GET/i });
+    await user.click(methodButton);
+
+    // Click on POST option in the dropdown
+    const postOption = screen.getByRole('button', { name: /POST/i });
+    await user.click(postOption);
+
+    // Now the button should show POST
+    expect(screen.getByRole('button', { name: /POST/i })).toBeInTheDocument();
   });
 
   it('shows params tab content when clicking params', async () => {
@@ -242,10 +250,13 @@ describe('RequestBuilder', () => {
     const authTabs = screen.getAllByText('auth');
     await user.click(authTabs[0]);
 
-    // Select bearer auth - there's a select in the auth tab
-    const authSelects = screen.getAllByRole('combobox');
-    // The first combobox is method, second is auth type
-    await user.selectOptions(authSelects[1], 'bearer');
+    // Click on the auth type dropdown (shows "No Auth" by default)
+    const noAuthButton = screen.getByRole('button', { name: /No Auth/i });
+    await user.click(noAuthButton);
+
+    // Select Bearer Token
+    const bearerOption = screen.getByRole('button', { name: /Bearer Token/i });
+    await user.click(bearerOption);
 
     expect(screen.getByPlaceholderText(/enter bearer token/i)).toBeInTheDocument();
   });
@@ -270,9 +281,9 @@ describe('RequestBuilder', () => {
     const bodyTabs = screen.getAllByText('body');
     await user.click(bodyTabs[0]);
 
-    // Select JSON body type
-    const jsonRadio = screen.getByLabelText(/json/i);
-    await user.click(jsonRadio);
+    // Click on JSON option in RadioGroup
+    const jsonOption = screen.getByText('JSON');
+    await user.click(jsonOption);
 
     expect(screen.getByPlaceholderText(/"key": "value"/i)).toBeInTheDocument();
   });
@@ -320,6 +331,7 @@ describe('RequestBuilder', () => {
     await waitFor(() => {
       expect(screen.getByPlaceholderText(/enter request url/i)).toHaveValue('');
     });
-    expect(screen.getByRole('combobox')).toHaveValue('GET');
+    // Method resets to GET
+    expect(screen.getByRole('button', { name: /GET/i })).toBeInTheDocument();
   });
 });

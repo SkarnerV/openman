@@ -1,4 +1,5 @@
-import { Folder, Globe, Settings, History } from "lucide-react";
+import { Folder, Globe, Settings, History, PanelLeft, PanelLeftClose } from "lucide-react";
+import { useSettingsStore } from "../../stores/useSettingsStore";
 
 export type ActivityTab = "collections" | "history" | "environments" | "settings";
 
@@ -8,6 +9,8 @@ interface ActivityBarProps {
 }
 
 export function ActivityBar({ activeTab, onTabChange }: ActivityBarProps) {
+  const { sidebarVisible, toggleSidebar } = useSettingsStore();
+
   const tabs: { id: ActivityTab; icon: typeof Folder; label: string }[] = [
     { id: "collections", icon: Folder, label: "Collections" },
     { id: "history", icon: History, label: "History" },
@@ -44,6 +47,22 @@ export function ActivityBar({ activeTab, onTabChange }: ActivityBarProps) {
 
   return (
     <div className="w-12 h-full bg-page-bg flex flex-col items-center py-3 gap-1">
+      {/* Sidebar Toggle - at the top */}
+      <button
+        onClick={toggleSidebar}
+        className="w-10 h-10 rounded-lg flex items-center justify-center text-text-secondary hover:bg-elevated-bg hover:text-text-primary transition-colors duration-150 mb-2"
+        title={sidebarVisible ? "Hide sidebar" : "Show sidebar"}
+      >
+        {sidebarVisible ? (
+          <PanelLeftClose className="w-5 h-5" />
+        ) : (
+          <PanelLeft className="w-5 h-5" />
+        )}
+      </button>
+
+      {/* Divider */}
+      <div className="w-6 h-px bg-elevated-bg mb-2" />
+
       {/* Top tabs */}
       {tabs.map(renderTab)}
 

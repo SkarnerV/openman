@@ -7,6 +7,7 @@ import {
 } from "../stores/useEnvironmentStore";
 import { CreateEnvironmentModal } from "../components/common/CreateEnvironmentModal";
 import { ConfirmDialog } from "../components/common/ConfirmDialog";
+import { Checkbox } from "../components/common/Checkbox";
 
 export function EnvironmentsPage() {
   const {
@@ -284,11 +285,9 @@ export function EnvironmentsPage() {
                             : "bg-elevated-bg/50"
                         }`}
                       >
-                        <input
-                          type="checkbox"
+                        <Checkbox
                           checked={variable.enabled}
                           onChange={() => handleToggleVariable(index)}
-                          className="w-4 h-4"
                         />
                         <span className="font-mono text-sm text-accent-orange">
                           {`{{${variable.key}}}`}

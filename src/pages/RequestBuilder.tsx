@@ -3,6 +3,10 @@ import { Send, Save, Copy, Loader2 } from "lucide-react";
 import { useRequestStore } from "../stores/useRequestStore";
 import { sendHttpRequest } from "../services/httpService";
 import { SaveRequestModal } from "../components/common/SaveRequestModal";
+import { MethodSelect } from "../components/common/MethodSelect";
+import { Checkbox } from "../components/common/Checkbox";
+import { RadioGroup } from "../components/common/RadioGroup";
+import { Select } from "../components/common/Select";
 import type { HttpRequest, HttpMethod, Header, QueryParam, AuthConfig } from "../stores/useRequestStore";
 
 export function RequestBuilder() {
@@ -66,33 +70,6 @@ export function RequestBuilder() {
     setBodyType("none");
     setAuth({ type: "none" });
   }, [currentRequest]);
-
-  const methods: HttpMethod[] = [
-    "GET",
-    "POST",
-    "PUT",
-    "PATCH",
-    "DELETE",
-    "HEAD",
-    "OPTIONS",
-  ];
-
-  const getMethodColor = (m: string) => {
-    switch (m) {
-      case "GET":
-        return "bg-get-method text-text-on-accent";
-      case "POST":
-        return "bg-post-method text-text-on-accent";
-      case "PUT":
-        return "bg-put-method text-text-on-accent";
-      case "PATCH":
-        return "bg-put-method text-text-on-accent";
-      case "DELETE":
-        return "bg-delete-method text-text-on-accent";
-      default:
-        return "bg-text-secondary text-text-primary";
-    }
-  };
 
   // Build URL with query params
   const buildUrlWithParams = useCallback(() => {
@@ -218,17 +195,10 @@ export function RequestBuilder() {
     <div className="h-full flex flex-col overflow-hidden p-6">
       {/* URL Bar */}
       <div className="flex items-center gap-2 mb-4">
-        <select
+        <MethodSelect
           value={method}
-          onChange={(e) => setMethod(e.target.value as HttpMethod)}
-          className={`px-4 py-3 rounded-radius font-semibold font-mono text-sm ${getMethodColor(method)} cursor-pointer`}
-        >
-          {methods.map((m) => (
-            <option key={m} value={m}>
-              {m}
-            </option>
-          ))}
-        </select>
+          onChange={(value) => setMethod(value as HttpMethod)}
+        />
         <input
           type="text"
           value={url}
@@ -308,13 +278,9 @@ export function RequestBuilder() {
                 <div className="space-y-2">
                   {params.map((param, index) => (
                     <div key={index} className="flex gap-2 items-center">
-                      <input
-                        type="checkbox"
+                      <Checkbox
                         checked={param.enabled}
-                        onChange={(e) =>
-                          updateParam(index, "enabled", e.target.checked)
-                        }
-                        className="w-4 h-4"
+                        onChange={(checked) => updateParam(index, "enabled", checked)}
                       />
                       <input
                         type="text"
@@ -374,13 +340,9 @@ export function RequestBuilder() {
                 <div className="space-y-2">
                   {headers.map((header, index) => (
                     <div key={index} className="flex gap-2 items-center">
-                      <input
-                        type="checkbox"
+                      <Checkbox
                         checked={header.enabled}
-                        onChange={(e) =>
-                          updateHeader(index, "enabled", e.target.checked)
-                        }
-                        className="w-4 h-4"
+                        onChange={(checked) => updateHeader(index, "enabled", checked)}
                       />
                       <input
                         type="text"
@@ -420,21 +382,16 @@ export function RequestBuilder() {
             {/* Body Tab */}
             {activeRequestTab === "body" && (
               <div className="text-sm">
-                <div className="flex gap-4 mb-3">
-                  {(["none", "json", "raw"] as const).map((type) => (
-                    <label key={type} className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="bodyType"
-                        value={type}
-                        checked={bodyType === type}
-                        onChange={() => setBodyType(type)}
-                        className="w-4 h-4"
-                      />
-                      <span className="capitalize">{type}</span>
-                    </label>
-                  ))}
-                </div>
+                <RadioGroup
+                  value={bodyType}
+                  onChange={(value) => setBodyType(value as "none" | "json" | "raw")}
+                  options={[
+                    { value: "none", label: "None" },
+                    { value: "json", label: "JSON" },
+                    { value: "raw", label: "Raw" },
+                  ]}
+                  className="mb-3"
+                />
                 {bodyType !== "none" && (
                   <textarea
                     value={body}
@@ -457,22 +414,22 @@ export function RequestBuilder() {
                   <label className="block mb-2 text-text-secondary">
                     Auth Type
                   </label>
-                  <select
+                  <Select
                     value={auth.type}
-                    onChange={(e) => {
-                      const type = e.target.value as AuthConfig["type"];
+                    onChange={(value) => {
+                      const type = value as AuthConfig["type"];
                       if (type === "none") setAuth({ type: "none" });
                       else if (type === "bearer") setAuth({ type: "bearer", token: "" });
                       else if (type === "basic") setAuth({ type: "basic", username: "", password: "" });
                       else if (type === "api-key") setAuth({ type: "api-key", key: "", value: "", addTo: "header" });
                     }}
-                    className="w-full px-3 py-2 bg-elevated-bg rounded-radius"
-                  >
-                    <option value="none">No Auth</option>
-                    <option value="bearer">Bearer Token</option>
-                    <option value="basic">Basic Auth</option>
-                    <option value="api-key">API Key</option>
-                  </select>
+                    options={[
+                      { value: "none", label: "No Auth" },
+                      { value: "bearer", label: "Bearer Token" },
+                      { value: "basic", label: "Basic Auth" },
+                      { value: "api-key", label: "API Key" },
+                    ]}
+                  />
                 </div>
 
                 {auth.type === "bearer" && (
@@ -537,14 +494,14 @@ export function RequestBuilder() {
                     </div>
                     <div className="mb-4">
                       <label className="block mb-2 text-text-secondary">Add to</label>
-                      <select
+                      <Select
                         value={"addTo" in auth ? auth.addTo : "header"}
-                        onChange={(e) => setAuth({ ...auth, addTo: e.target.value as "header" | "query" } as AuthConfig)}
-                        className="w-full px-3 py-2 bg-elevated-bg rounded-radius"
-                      >
-                        <option value="header">Header</option>
-                        <option value="query">Query Parameter</option>
-                      </select>
+                        onChange={(value) => setAuth({ ...auth, addTo: value as "header" | "query" } as AuthConfig)}
+                        options={[
+                          { value: "header", label: "Header" },
+                          { value: "query", label: "Query Parameter" },
+                        ]}
+                      />
                     </div>
                   </>
                 )}
