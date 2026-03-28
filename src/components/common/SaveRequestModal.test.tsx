@@ -108,7 +108,9 @@ describe('SaveRequestModal', () => {
     expect(screen.getByText('No collections')).toBeInTheDocument();
   });
 
-  it('shows collections in dropdown', () => {
+  it('shows collections in dropdown', async () => {
+    const user = userEvent.setup();
+
     useCollectionStore.setState({
       collections: [
         {
@@ -139,7 +141,14 @@ describe('SaveRequestModal', () => {
       />
     );
 
+    // The first collection should be selected by default
     expect(screen.getByText('API Collection')).toBeInTheDocument();
+
+    // Click on the select to open the dropdown
+    const selectButton = screen.getByRole('button', { name: /API Collection/i });
+    await user.click(selectButton);
+
+    // Now both collections should be visible in the dropdown
     expect(screen.getByText('User Collection')).toBeInTheDocument();
   });
 

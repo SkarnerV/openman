@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { X, Save } from "lucide-react";
 import { useCollectionStore } from "../../stores/useCollectionStore";
+import { Select } from "./Select";
 import type { HttpRequest } from "../../stores/useRequestStore";
 
 interface SaveRequestModalProps {
@@ -153,23 +154,18 @@ export function SaveRequestModal({ isOpen, onClose, request }: SaveRequestModalP
             </div>
           ) : (
             <div className="flex gap-2">
-              <select
+              <Select
                 value={selectedCollectionId}
-                onChange={(e) => {
-                  setSelectedCollectionId(e.target.value);
+                onChange={(value) => {
+                  setSelectedCollectionId(value);
                   setError(null);
                 }}
-                className="flex-1 px-4 py-3 bg-elevated-bg rounded-radius text-sm focus:outline-none focus:ring-2 focus:ring-accent-orange"
-              >
-                {collections.length === 0 && (
-                  <option value="">No collections</option>
-                )}
-                {collections.map((c: { id: string; name: string }) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
+                options={collections.map((c: { id: string; name: string }) => ({
+                  value: c.id,
+                  label: c.name,
+                }))}
+                placeholder="No collections"
+              />
               <button
                 onClick={() => setIsNewCollection(true)}
                 className="px-4 py-3 bg-accent-orange text-text-on-accent rounded-radius text-sm font-semibold hover:opacity-90 transition-opacity"

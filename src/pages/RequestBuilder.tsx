@@ -127,7 +127,7 @@ export function RequestBuilder() {
 
     const request: HttpRequest = {
       id: crypto.randomUUID(),
-      name: url,
+      name: currentRequest?.name || "",
       method,
       url: finalUrl,
       params,
@@ -650,7 +650,7 @@ export function RequestBuilder() {
         onClose={() => setShowSaveModal(false)}
         request={{
           id: crypto.randomUUID(),
-          name: url,
+          name: currentRequest?.name || "",
           method,
           url: buildUrlWithParams(),
           params,

@@ -27,6 +27,7 @@ interface CollectionState {
   setActiveCollection: (collection: Collection | null) => void;
   setSelectedRequest: (request: HttpRequest | null) => void;
   addRequestToCollection: (collectionId: string, request: HttpRequest) => Promise<void>;
+  deleteRequestFromCollection: (collectionId: string, requestId: string) => Promise<void>;
 }
 
 export const useCollectionStore = create<CollectionState>((set, get) => ({
@@ -115,6 +116,18 @@ export const useCollectionStore = create<CollectionState>((set, get) => ({
       ...collection.items,
       toRequestCollectionItem(request),
     ];
+    await get().updateCollection(collectionId, { items: updatedItems });
+  },
+
+  deleteRequestFromCollection: async (collectionId: string, requestId: string) => {
+    const collection = get().collections.find((c) => c.id === collectionId);
+    if (!collection) throw new Error("Collection not found");
+
+    const updatedItems = collection.items.filter((item) => {
+      // Handle both HttpRequest and RequestCollectionItem
+      const itemId = 'id' in item ? item.id : '';
+      return itemId !== requestId;
+    });
     await get().updateCollection(collectionId, { items: updatedItems });
   },
 }));

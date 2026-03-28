@@ -14,18 +14,23 @@ import { useCollectionStore, type Collection } from "../../stores/useCollectionS
 import { useRequestStore, type HttpRequest } from "../../stores/useRequestStore";
 import { type CollectionItem, type RequestCollectionItem } from "../../services/storageService";
 import { CreateCollectionModal } from "../common/CreateCollectionModal";
+import { ConfirmDialog } from "../common/ConfirmDialog";
 import { useSettingsStore } from "../../stores/useSettingsStore";
 
 export function Sidebar() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
-  const [expandedCollections, setExpandedCollections] = useState<
-    Record<string, boolean>
-  >({});
+  const [expandedCollections, setExpandedCollections] = useState<Record<string, boolean>>({});
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    type: "collection" | "request";
+    collectionId: string;
+    requestId?: string;
+    name: string;
+  } | null>(null);
   const { sidebarVisible, toggleSidebar } = useSettingsStore();
 
-  const { collections, createCollection, deleteCollection } = useCollectionStore();
+  const { collections, createCollection, deleteCollection, deleteRequestFromCollection } = useCollectionStore();
   const { setCurrentRequest, setResponse, setError } = useRequestStore();
 
   const toggleCollection = (collectionId: string) => {
@@ -70,6 +75,16 @@ export function Sidebar() {
     await createCollection(name, description);
   };
 
+  const handleDeleteCollection = async (collectionId: string) => {
+    await deleteCollection(collectionId);
+    setDeleteConfirm(null);
+  };
+
+  const handleDeleteRequest = async (collectionId: string, requestId: string) => {
+    await deleteRequestFromCollection(collectionId, requestId);
+    setDeleteConfirm(null);
+  };
+
   const isRequestItem = (item: CollectionItem): item is HttpRequest | RequestCollectionItem => {
     return "method" in item && ("type" in item ? item.type === "request" : true);
   };
@@ -96,6 +111,24 @@ export function Sidebar() {
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onCreate={handleCreateCollection}
+      />
+      <ConfirmDialog
+        isOpen={deleteConfirm !== null}
+        title={deleteConfirm?.type === "collection" ? "Delete Collection" : "Delete Request"}
+        message={
+          deleteConfirm?.type === "collection"
+            ? `Are you sure you want to delete "${deleteConfirm?.name}"? This will also delete all requests in this collection.`
+            : `Are you sure you want to delete "${deleteConfirm?.name}"?`
+        }
+        confirmLabel="Delete"
+        onConfirm={() => {
+          if (deleteConfirm?.type === "collection") {
+            handleDeleteCollection(deleteConfirm.collectionId);
+          } else if (deleteConfirm?.type === "request" && deleteConfirm.requestId) {
+            handleDeleteRequest(deleteConfirm.collectionId, deleteConfirm.requestId);
+          }
+        }}
+        onCancel={() => setDeleteConfirm(null)}
       />
       <div className="w-[260px] h-full bg-page-bg flex flex-col border-r border-elevated-bg">
       {/* Header */}
@@ -175,8 +208,18 @@ export function Sidebar() {
                 collection={collection}
                 isExpanded={expandedCollections[collection.id]}
                 onToggle={() => toggleCollection(collection.id)}
-                onDelete={() => deleteCollection(collection.id)}
+                onDelete={() => setDeleteConfirm({
+                  type: "collection",
+                  collectionId: collection.id,
+                  name: collection.name,
+                })}
                 onSelectRequest={handleSelectRequest}
+                onDeleteRequest={(requestId, requestName) => setDeleteConfirm({
+                  type: "request",
+                  collectionId: collection.id,
+                  requestId,
+                  name: requestName,
+                })}
                 getMethodColor={getMethodColor}
                 formatUrl={formatUrl}
                 isRequestItem={isRequestItem}
@@ -196,6 +239,7 @@ interface CollectionItemProps {
   onToggle: () => void;
   onDelete: () => void;
   onSelectRequest: (request: HttpRequest) => void;
+  onDeleteRequest: (requestId: string, requestName: string) => void;
   getMethodColor: (method: string) => string;
   formatUrl: (url: string) => string;
   isRequestItem: (item: CollectionItem) => item is HttpRequest | RequestCollectionItem;
@@ -207,6 +251,7 @@ function CollectionItem({
   onToggle,
   onDelete,
   onSelectRequest,
+  onDeleteRequest,
   getMethodColor,
   formatUrl,
   isRequestItem,
@@ -244,17 +289,28 @@ function CollectionItem({
               return (
                 <div
                   key={item.id}
-                  onClick={() => onSelectRequest(item)}
-                  className="flex items-center gap-2 py-1 px-2 rounded hover:bg-elevated-bg cursor-pointer"
+                  className="group/request flex items-center gap-2 py-1 px-2 rounded hover:bg-elevated-bg cursor-pointer"
                 >
                   <span
                     className={`font-mono text-xs font-semibold ${getMethodColor(item.method)}`}
                   >
                     {item.method}
                   </span>
-                  <span className="text-xs truncate flex-1 text-text-secondary">
-                    {formatUrl(item.url)}
+                  <span
+                    className="text-xs truncate flex-1 text-text-secondary"
+                    onClick={() => onSelectRequest(item)}
+                  >
+                    {item.name || formatUrl(item.url)}
                   </span>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDeleteRequest(item.id, item.name || formatUrl(item.url));
+                    }}
+                    className="p-1 opacity-0 group-hover/request:opacity-100 hover:bg-card-bg rounded transition-opacity"
+                  >
+                    <span className="text-text-secondary hover:text-delete-method">×</span>
+                  </button>
                 </div>
               );
             }

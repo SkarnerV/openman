@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Settings, PenTool, Keyboard, Moon, Sun, Monitor } from "lucide-react";
 import { useThemeStore } from "../stores/useThemeStore";
 import { useSettingsStore } from "../stores/useSettingsStore";
+import { Select } from "../components/common/Select";
+import { Checkbox } from "../components/common/Checkbox";
 
 type SettingsSection = "general" | "editor" | "shortcuts";
 
@@ -113,15 +115,15 @@ function GeneralSettings() {
               Select your preferred language
             </p>
           </div>
-          <select
+          <Select
             value={language}
-            onChange={(e) => setLanguage(e.target.value)}
-            className="px-4 py-2 bg-elevated-bg rounded-radius text-sm focus:outline-none focus:ring-2 focus:ring-accent-orange"
-          >
-            <option value="en">English</option>
-            <option value="zh">中文</option>
-            <option value="ja">日本語</option>
-          </select>
+            onChange={(value) => setLanguage(value)}
+            options={[
+              { value: "en", label: "English" },
+              { value: "zh", label: "中文" },
+              { value: "ja", label: "日本語" },
+            ]}
+          />
         </div>
 
         {/* Auto Save */}
@@ -132,15 +134,10 @@ function GeneralSettings() {
               Automatically save requests and collections
             </p>
           </div>
-          <label className="relative inline-flex items-center cursor-pointer">
-            <input
-              type="checkbox"
-              className="sr-only peer"
-              checked={autoSave}
-              onChange={(e) => setAutoSave(e.target.checked)}
-            />
-            <div className="w-11 h-6 bg-elevated-bg peer-focus:outline-none rounded-radius peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-orange"></div>
-          </label>
+          <Checkbox
+            checked={autoSave}
+            onChange={(checked) => setAutoSave(checked)}
+          />
         </div>
 
         {/* Send Analytics */}
@@ -151,15 +148,10 @@ function GeneralSettings() {
               Help improve Openman by sending anonymous usage data
             </p>
           </div>
-          <label className="relative inline-flex items-center cursor-pointer">
-            <input
-              type="checkbox"
-              className="sr-only peer"
-              checked={sendAnalytics}
-              onChange={(e) => setSendAnalytics(e.target.checked)}
-            />
-            <div className="w-11 h-6 bg-elevated-bg peer-focus:outline-none rounded-radius peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-orange"></div>
-          </label>
+          <Checkbox
+            checked={sendAnalytics}
+            onChange={(checked) => setSendAnalytics(checked)}
+          />
         </div>
       </div>
     </div>
@@ -181,16 +173,16 @@ function EditorSettings() {
               Adjust the editor font size
             </p>
           </div>
-          <select
-            value={fontSize}
-            onChange={(e) => setFontSize(Number(e.target.value))}
-            className="px-4 py-2 bg-elevated-bg rounded-radius text-sm focus:outline-none focus:ring-2 focus:ring-accent-orange"
-          >
-            <option value={12}>12px</option>
-            <option value={14}>14px</option>
-            <option value={16}>16px</option>
-            <option value={18}>18px</option>
-          </select>
+          <Select
+            value={fontSize.toString()}
+            onChange={(value) => setFontSize(Number(value))}
+            options={[
+              { value: "12", label: "12px" },
+              { value: "14", label: "14px" },
+              { value: "16", label: "16px" },
+              { value: "18", label: "18px" },
+            ]}
+          />
         </div>
 
         {/* Tab Size */}
@@ -201,14 +193,14 @@ function EditorSettings() {
               Number of spaces for tab indentation
             </p>
           </div>
-          <select
-            value={tabSize}
-            onChange={(e) => setTabSize(Number(e.target.value))}
-            className="px-4 py-2 bg-elevated-bg rounded-radius text-sm focus:outline-none focus:ring-2 focus:ring-accent-orange"
-          >
-            <option value={2}>2 spaces</option>
-            <option value={4}>4 spaces</option>
-          </select>
+          <Select
+            value={tabSize.toString()}
+            onChange={(value) => setTabSize(Number(value))}
+            options={[
+              { value: "2", label: "2 spaces" },
+              { value: "4", label: "4 spaces" },
+            ]}
+          />
         </div>
 
         {/* Word Wrap */}
@@ -219,15 +211,10 @@ function EditorSettings() {
               Wrap long lines in the editor
             </p>
           </div>
-          <label className="relative inline-flex items-center cursor-pointer">
-            <input
-              type="checkbox"
-              className="sr-only peer"
-              checked={wordWrap}
-              onChange={(e) => setWordWrap(e.target.checked)}
-            />
-            <div className="w-11 h-6 bg-elevated-bg peer-focus:outline-none rounded-radius peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-orange"></div>
-          </label>
+          <Checkbox
+            checked={wordWrap}
+            onChange={(checked) => setWordWrap(checked)}
+          />
         </div>
 
         {/* Auto Format */}
@@ -238,15 +225,10 @@ function EditorSettings() {
               Automatically format JSON responses
             </p>
           </div>
-          <label className="relative inline-flex items-center cursor-pointer">
-            <input
-              type="checkbox"
-              className="sr-only peer"
-              checked={autoFormatJson}
-              onChange={(e) => setAutoFormatJson(e.target.checked)}
-            />
-            <div className="w-11 h-6 bg-elevated-bg peer-focus:outline-none rounded-radius peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-orange"></div>
-          </label>
+          <Checkbox
+            checked={autoFormatJson}
+            onChange={(checked) => setAutoFormatJson(checked)}
+          />
         </div>
       </div>
     </div>
