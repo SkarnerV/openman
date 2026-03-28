@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Search, Plus, FolderOpen, MoreVertical, Trash2, Edit2 } from "lucide-react";
 import { useCollectionStore } from "../stores/useCollectionStore";
+import { useRequestStore } from "../stores/useRequestStore";
 import { useNavigate } from "react-router-dom";
 
 export function CollectionsPage() {
@@ -10,6 +11,11 @@ export function CollectionsPage() {
     createCollection,
     deleteCollection,
   } = useCollectionStore();
+  const {
+    setCurrentRequest,
+    setResponse,
+    setError,
+  } = useRequestStore();
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
 
@@ -32,6 +38,9 @@ export function CollectionsPage() {
   };
 
   const handleNewRequest = () => {
+    setCurrentRequest(null);
+    setResponse(null);
+    setError(null);
     navigate("/request");
   };
 

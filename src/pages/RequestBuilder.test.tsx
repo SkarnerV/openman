@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { BrowserRouter } from 'react-router-dom';
 import { RequestBuilder } from './RequestBuilder';
@@ -34,9 +34,10 @@ describe('RequestBuilder', () => {
     });
   });
 
-  it('shows empty state when no URL is entered', () => {
+  it('renders the URL input for a new request', () => {
     renderWithRouter(<RequestBuilder />);
-    expect(screen.getByText(/start building your request/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/enter request url/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /send/i })).toBeDisabled();
   });
 
   it('shows URL input after initializing with a URL', async () => {
@@ -290,7 +291,35 @@ describe('RequestBuilder', () => {
     });
 
     renderWithRouter(<RequestBuilder />);
-    // When URL is empty, the empty state is shown
-    expect(screen.getByText(/start building your request/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /send/i })).toBeDisabled();
+  });
+
+  it('resets the editor when the current request is cleared', async () => {
+    useRequestStore.setState({
+      currentRequest: {
+        id: 'test',
+        name: 'Test',
+        method: 'POST',
+        url: 'https://api.example.com/users',
+        headers: [{ key: 'Authorization', value: 'Bearer token', enabled: true }],
+        createdAt: '2024-01-01T00:00:00Z',
+        updatedAt: '2024-01-01T00:00:00Z',
+      },
+    });
+
+    renderWithRouter(<RequestBuilder />);
+
+    expect(screen.getByPlaceholderText(/enter request url/i)).toHaveValue(
+      'https://api.example.com/users'
+    );
+
+    act(() => {
+      useRequestStore.getState().setCurrentRequest(null);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText(/enter request url/i)).toHaveValue('');
+    });
+    expect(screen.getByRole('combobox')).toHaveValue('GET');
   });
 });

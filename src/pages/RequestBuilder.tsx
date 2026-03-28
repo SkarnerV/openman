@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { Send, Save, Copy, Loader2, Plus } from "lucide-react";
+import { Send, Save, Copy, Loader2 } from "lucide-react";
 import { useRequestStore } from "../stores/useRequestStore";
 import { sendHttpRequest } from "../services/httpService";
 import { SaveRequestModal } from "../components/common/SaveRequestModal";
@@ -55,7 +55,16 @@ export function RequestBuilder() {
       setBody(currentRequest.body?.content || "");
       setBodyType((currentRequest.body?.mode as "none" | "json" | "raw") || "none");
       setAuth(currentRequest.auth || { type: "none" });
+      return;
     }
+
+    setMethod("GET");
+    setUrl("");
+    setParams([]);
+    setHeaders([]);
+    setBody("");
+    setBodyType("none");
+    setAuth({ type: "none" });
   }, [currentRequest]);
 
   const methods: HttpMethod[] = [
@@ -204,25 +213,6 @@ export function RequestBuilder() {
       return json;
     }
   };
-
-  // Empty state
-  if (!url && !response) {
-    return (
-      <div className="h-full flex flex-col items-center justify-center p-8">
-        <div className="text-center max-w-md">
-          <div className="w-16 h-16 rounded-full bg-card-bg flex items-center justify-center mx-auto mb-6">
-            <Plus className="w-8 h-8 text-accent-orange" />
-          </div>
-          <h2 className="text-xl font-semibold mb-2 font-display">
-            Start Building Your Request
-          </h2>
-          <p className="text-text-secondary mb-6">
-            Enter a URL above to begin testing your API endpoints.
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="h-full flex flex-col overflow-hidden p-6">

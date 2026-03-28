@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { BrowserRouter } from 'react-router-dom';
 import { CollectionsPage } from './CollectionsPage';
 import { useCollectionStore } from '../stores/useCollectionStore';
+import { useRequestStore } from '../stores/useRequestStore';
 
 const mockNavigate = vi.fn();
 vi.mock('react-router-dom', async () => {
@@ -44,6 +45,14 @@ describe('CollectionsPage', () => {
       setActiveCollection: vi.fn(),
       setSelectedRequest: vi.fn(),
       addRequestToCollection: vi.fn(),
+    });
+
+    useRequestStore.setState({
+      currentRequest: null,
+      response: null,
+      isLoading: false,
+      error: null,
+      requestHistory: [],
     });
   });
 
@@ -305,12 +314,35 @@ describe('CollectionsPage', () => {
         },
       ],
     });
+    useRequestStore.setState({
+      currentRequest: {
+        id: 'request-1',
+        name: 'Saved Request',
+        method: 'GET',
+        url: 'https://api.example.com/users',
+        headers: [],
+        createdAt: '2024-01-01T00:00:00Z',
+        updatedAt: '2024-01-01T00:00:00Z',
+      },
+      response: {
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        body: '{}',
+        responseTime: 20,
+        responseSize: 2,
+      },
+      error: 'Previous error',
+    });
 
     renderWithRouter(<CollectionsPage />);
 
     const newRequestButton = screen.getByRole('button', { name: /new request/i });
     fireEvent.click(newRequestButton);
 
+    expect(useRequestStore.getState().currentRequest).toBeNull();
+    expect(useRequestStore.getState().response).toBeNull();
+    expect(useRequestStore.getState().error).toBeNull();
     expect(mockNavigate).toHaveBeenCalledWith('/request');
   });
 

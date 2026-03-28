@@ -5,7 +5,9 @@ import {
   updateCollection as updateCollectionApi,
   deleteCollection as deleteCollectionApi,
   type Collection,
+  type CollectionItem,
   type HttpRequest,
+  toRequestCollectionItem,
 } from "../services/storageService";
 import { useWorkspaceStore } from "./useWorkspaceStore";
 
@@ -109,7 +111,10 @@ export const useCollectionStore = create<CollectionState>((set, get) => ({
     const collection = get().collections.find((c) => c.id === collectionId);
     if (!collection) throw new Error("Collection not found");
 
-    const updatedItems = [...collection.items, request] as Collection["items"];
+    const updatedItems: CollectionItem[] = [
+      ...collection.items,
+      toRequestCollectionItem(request),
+    ];
     await get().updateCollection(collectionId, { items: updatedItems });
   },
 }));

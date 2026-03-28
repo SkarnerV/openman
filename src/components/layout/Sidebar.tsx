@@ -14,6 +14,7 @@ import {
 import { useCollectionStore, type Collection } from "../../stores/useCollectionStore";
 import { useRequestStore, type HttpRequest } from "../../stores/useRequestStore";
 import { useEnvironmentStore } from "../../stores/useEnvironmentStore";
+import { type CollectionItem, type RequestCollectionItem } from "../../services/storageService";
 import type { ActivityTab } from "./ActivityBar";
 
 interface SidebarProps {
@@ -29,7 +30,7 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
   >({});
 
   const { collections, createCollection, deleteCollection } = useCollectionStore();
-  const { requestHistory, setCurrentRequest } = useRequestStore();
+  const { requestHistory, setCurrentRequest, setResponse, setError } = useRequestStore();
   const { activeEnvironment } = useEnvironmentStore();
 
   const toggleCollection = (collectionId: string) => {
@@ -81,8 +82,8 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
     }
   };
 
-  const isRequestItem = (item: unknown): item is HttpRequest => {
-    return (item as HttpRequest).method !== undefined;
+  const isRequestItem = (item: CollectionItem): item is HttpRequest | RequestCollectionItem => {
+    return "method" in item && ("type" in item ? item.type === "request" : true);
   };
 
   const filteredCollections = collections.filter((c) =>
@@ -121,7 +122,12 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
       {/* New Request Button */}
       <div className="px-3 mb-4">
         <button
-          onClick={() => navigate("/request")}
+          onClick={() => {
+            setCurrentRequest(null);
+            setResponse(null);
+            setError(null);
+            navigate("/request");
+          }}
           className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-accent-orange text-text-on-accent rounded-lg font-semibold hover:opacity-90 transition-opacity"
         >
           <Plus className="w-4 h-4" />
@@ -234,7 +240,7 @@ interface CollectionItemProps {
   onSelectRequest: (request: HttpRequest) => void;
   getMethodColor: (method: string) => string;
   formatUrl: (url: string) => string;
-  isRequestItem: (item: unknown) => item is HttpRequest;
+  isRequestItem: (item: CollectionItem) => item is HttpRequest | RequestCollectionItem;
 }
 
 function CollectionItem({

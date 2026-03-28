@@ -70,11 +70,36 @@ describe('Sidebar', () => {
   });
 
   it('navigates to /request when clicking New Request', async () => {
+    useRequestStore.setState({
+      currentRequest: {
+        id: 'request-1',
+        name: 'Saved Request',
+        method: 'GET',
+        url: 'https://api.example.com/users',
+        headers: [],
+        createdAt: '2024-01-01T00:00:00Z',
+        updatedAt: '2024-01-01T00:00:00Z',
+      },
+      response: {
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        body: '{}',
+        responseTime: 10,
+        responseSize: 2,
+      },
+      error: 'Previous error',
+      requestHistory: [],
+    });
+
     renderWithRouter(<Sidebar activeTab="collections" onTabChange={mockOnTabChange} />);
 
     const newRequestButton = screen.getByRole('button', { name: /new request/i });
     fireEvent.click(newRequestButton);
 
+    expect(useRequestStore.getState().currentRequest).toBeNull();
+    expect(useRequestStore.getState().response).toBeNull();
+    expect(useRequestStore.getState().error).toBeNull();
     expect(mockNavigate).toHaveBeenCalledWith('/request');
   });
 

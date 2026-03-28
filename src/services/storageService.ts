@@ -1,4 +1,11 @@
 import { invoke } from "@tauri-apps/api/core";
+import type {
+  AuthConfig as StoredAuthConfig,
+  Header as StoredHeader,
+  HttpMethod,
+  QueryParam,
+  RequestBody as StoredRequestBody,
+} from "../stores/useRequestStore";
 
 // Types
 export interface Workspace {
@@ -21,14 +28,20 @@ export interface Collection {
   name: string;
   description?: string;
   parentId?: string;
-  auth?: AuthConfig;
+  auth?: StoredAuthConfig;
   variables: Variable[];
   items: CollectionItem[];
   createdAt: string;
   updatedAt: string;
 }
 
-export type CollectionItem = HttpRequest | Collection;
+export type RequestCollectionItem = HttpRequest & { type: "request" };
+export type NestedCollectionItem = Collection & { type: "collection" };
+export type CollectionItem =
+  | HttpRequest
+  | Collection
+  | RequestCollectionItem
+  | NestedCollectionItem;
 
 export interface Variable {
   key: string;
@@ -38,37 +51,26 @@ export interface Variable {
   enabled: boolean;
 }
 
-export type AuthConfig =
-  | { type: "none" }
-  | { type: "bearer"; token: string }
-  | { type: "basic"; username: string; password: string }
-  | { type: "api-key"; key: string; value: string; addTo: "header" | "query" };
+export type AuthConfig = StoredAuthConfig;
 
 export interface HttpRequest {
   id: string;
   name: string;
   description?: string;
-  method: string;
+  method: HttpMethod;
   url: string;
-  headers: Header[];
-  body?: RequestBody;
-  auth?: AuthConfig;
+  params?: QueryParam[];
+  headers: StoredHeader[];
+  body?: StoredRequestBody;
+  auth?: StoredAuthConfig;
+  preRequestScript?: string;
+  testScript?: string;
   createdAt: string;
   updatedAt: string;
 }
 
-export interface Header {
-  key: string;
-  value: string;
-  description?: string;
-  enabled: boolean;
-}
-
-export interface RequestBody {
-  mode: "none" | "json" | "raw" | "form-data" | "x-www-form-urlencoded" | "binary";
-  content?: string;
-  language?: string;
-}
+export type Header = StoredHeader;
+export type RequestBody = StoredRequestBody;
 
 export interface Environment {
   id: string;
@@ -84,6 +86,15 @@ export interface EnvironmentVariable {
   value: string;
   description?: string;
   enabled: boolean;
+}
+
+export function toRequestCollectionItem(
+  request: HttpRequest
+): RequestCollectionItem {
+  return {
+    type: "request",
+    ...request,
+  };
 }
 
 // Workspace operations
