@@ -1,6 +1,11 @@
 import { useState } from "react";
 import { Plus, Globe, Trash2, Copy } from "lucide-react";
-import { useEnvironmentStore, type Environment, type EnvironmentVariable } from "../stores/useEnvironmentStore";
+import {
+  useEnvironmentStore,
+  type Environment,
+  type EnvironmentVariable,
+} from "../stores/useEnvironmentStore";
+import { CreateEnvironmentModal } from "../components/common/CreateEnvironmentModal";
 
 export function EnvironmentsPage() {
   const {
@@ -14,24 +19,17 @@ export function EnvironmentsPage() {
   } = useEnvironmentStore();
 
   const [selectedEnvId, setSelectedEnvId] = useState<string | null>(
-    environments.find((e) => e.isActive)?.id || environments[0]?.id || null
+    environments.find((e) => e.isActive)?.id || environments[0]?.id || null,
   );
   const [newVarKey, setNewVarKey] = useState("");
   const [newVarValue, setNewVarValue] = useState("");
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   const selectedEnv = environments.find((e) => e.id === selectedEnvId);
 
-  const handleCreateEnvironment = async () => {
-    const name = prompt("Enter environment name:");
-    if (name?.trim()) {
-      try {
-        const env = await createEnvironment(name.trim());
-        setSelectedEnvId(env.id);
-      } catch (err) {
-        console.error("Failed to create environment:", err);
-        alert("Failed to create environment");
-      }
-    }
+  const handleCreateEnvironment = async (name: string) => {
+    const env = await createEnvironment(name);
+    setSelectedEnvId(env.id);
   };
 
   const handleAddVariable = async () => {
@@ -59,7 +57,7 @@ export function EnvironmentsPage() {
   const handleToggleVariable = async (index: number) => {
     if (!selectedEnv) return;
     const newVars = selectedEnv.variables.map((v, i) =>
-      i === index ? { ...v, enabled: !v.enabled } : v
+      i === index ? { ...v, enabled: !v.enabled } : v,
     );
     await updateEnvironment(selectedEnvId!, { variables: newVars });
   };
@@ -104,37 +102,51 @@ export function EnvironmentsPage() {
   // True Empty State
   if (environments.length === 0) {
     return (
-      <div className="h-full flex flex-col items-center justify-center p-8">
-        <div className="text-center max-w-md">
-          <div className="w-16 h-16 rounded-full bg-card-bg flex items-center justify-center mx-auto mb-6">
-            <Globe className="w-8 h-8 text-text-secondary" />
+      <>
+        <CreateEnvironmentModal
+          isOpen={isCreateModalOpen}
+          onClose={() => setIsCreateModalOpen(false)}
+          onCreate={handleCreateEnvironment}
+        />
+        <div className="h-full flex flex-col items-center justify-center p-8">
+          <div className="text-center max-w-md">
+            <div className="w-16 h-16 rounded-full bg-card-bg flex items-center justify-center mx-auto mb-6">
+              <Globe className="w-8 h-8 text-text-secondary" />
+            </div>
+            <h2 className="text-xl font-semibold mb-2 font-display">
+              No Environments Yet
+            </h2>
+            <p className="text-text-secondary mb-6">
+              Create an environment to manage variables for different stages
+              (development, staging, production).
+            </p>
+            <button
+              onClick={() => setIsCreateModalOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-accent-orange text-text-on-accent rounded-radius font-semibold mx-auto hover:opacity-90 transition-opacity"
+            >
+              <Plus className="w-5 h-5" />
+              Create Environment
+            </button>
           </div>
-          <h2 className="text-xl font-semibold mb-2 font-display">
-            No Environments Yet
-          </h2>
-          <p className="text-text-secondary mb-6">
-            Create an environment to manage variables for different stages (development, staging, production).
-          </p>
-          <button
-            onClick={handleCreateEnvironment}
-            className="flex items-center gap-2 px-4 py-2 bg-accent-orange text-text-on-accent rounded-radius font-semibold mx-auto hover:opacity-90 transition-opacity"
-          >
-            <Plus className="w-5 h-5" />
-            Create Environment
-          </button>
         </div>
-      </div>
+      </>
     );
   }
 
   return (
-    <div className="h-full flex gap-6 p-8 overflow-hidden">
+    <>
+      <CreateEnvironmentModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onCreate={handleCreateEnvironment}
+      />
+      <div className="h-full flex gap-6 p-8 overflow-hidden">
       {/* Environment List */}
       <div className="w-80 bg-card-bg rounded-radius p-5 flex flex-col">
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-semibold">Environments</h2>
           <button
-            onClick={handleCreateEnvironment}
+            onClick={() => setIsCreateModalOpen(true)}
             className="p-2 hover:bg-elevated-bg rounded-radius transition-colors"
             title="New Environment"
           >
@@ -184,9 +196,13 @@ export function EnvironmentsPage() {
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-semibold text-lg">{selectedEnv.name}</h2>
               <button
-                onClick={() => handleSetActive(
-                  activeEnvironment?.id === selectedEnv.id ? null : (selectedEnv ?? null)
-                )}
+                onClick={() =>
+                  handleSetActive(
+                    activeEnvironment?.id === selectedEnv.id
+                      ? null
+                      : (selectedEnv ?? null),
+                  )
+                }
                 className={`px-3 py-1.5 rounded-radius text-sm transition-colors ${
                   activeEnvironment?.id === selectedEnv.id
                     ? "bg-accent-teal text-text-on-accent"
@@ -238,7 +254,9 @@ export function EnvironmentsPage() {
                     <div
                       key={index}
                       className={`flex items-center gap-3 p-3 rounded-radius ${
-                        variable.enabled ? "bg-elevated-bg" : "bg-elevated-bg/50"
+                        variable.enabled
+                          ? "bg-elevated-bg"
+                          : "bg-elevated-bg/50"
                       }`}
                     >
                       <input
@@ -282,5 +300,6 @@ export function EnvironmentsPage() {
         )}
       </div>
     </div>
+    </>
   );
 }

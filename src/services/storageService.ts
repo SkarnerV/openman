@@ -149,42 +149,54 @@ export async function deleteCollection(
 
 // Environment operations
 export async function getEnvironments(workspaceId: string): Promise<Environment[]> {
-  return invoke("get_environments", { workspaceId });
+  return invoke("get_environments", { workspace_id: workspaceId });
 }
 
 export async function getEnvironment(
   workspaceId: string,
   environmentId: string
 ): Promise<Environment> {
-  return invoke("get_environment", { workspaceId, environmentId });
+  return invoke("get_environment", {
+    workspace_id: workspaceId,
+    environment_id: environmentId,
+  });
 }
 
 export async function createEnvironment(
   workspaceId: string,
   name: string
 ): Promise<Environment> {
-  return invoke("create_environment", { workspaceId, name });
+  return invoke("create_environment", { workspace_id: workspaceId, name });
 }
 
 export async function updateEnvironment(
   workspaceId: string,
   environment: Environment
 ): Promise<void> {
-  return invoke("update_environment", { workspaceId, environment });
+  return invoke("update_environment", {
+    workspace_id: workspaceId,
+    environment,
+  });
 }
 
 export async function deleteEnvironment(
   workspaceId: string,
   environmentId: string
 ): Promise<void> {
-  return invoke("delete_environment", { workspaceId, environmentId });
+  return invoke("delete_environment", {
+    workspace_id: workspaceId,
+    environment_id: environmentId,
+  });
 }
 
 export async function setActiveEnvironment(
   workspaceId: string,
   environmentId: string | null
 ): Promise<void> {
-  return invoke("set_active_environment", { workspaceId, environmentId });
+  return invoke("set_active_environment", {
+    workspace_id: workspaceId,
+    environment_id: environmentId,
+  });
 }
 
 // Import/Export

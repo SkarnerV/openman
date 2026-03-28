@@ -108,7 +108,7 @@ export const useEnvironmentStore = create<EnvironmentState>((set, get) => ({
     set((state) => ({
       environments: state.environments.map((e) => ({
         ...e,
-        is_active: e.id === environment?.id,
+        isActive: e.id === environment?.id,
       })),
       activeEnvironment: environment,
     }));
