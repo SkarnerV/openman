@@ -4,6 +4,67 @@
 
 @layer base {
   :root {
+    /* OpenMan Design System - Light Theme */
+    --page-bg: #F5F5F5;
+    --card-bg: #FFFFFF;
+    --elevated-bg: #EBEBEB;
+    --placeholder-bg: #D9D9D9;
+
+    --text-primary: #1A1A1A;
+    --text-secondary: #666666;
+    --text-on-accent: #FFFFFF;
+
+    --accent-orange: #FF6B35;
+    --accent-teal: #00B894;
+
+    --error: #E53935;
+    --warning: #FF6B35;
+    --success: #00B894;
+
+    /* HTTP Method Colors */
+    --get-method: #00B894;
+    --post-method: #FF6B35;
+    --put-method: #F5A623;
+    --delete-method: #E53935;
+
+    /* Spacing */
+    --gap-xs: 4px;
+    --gap-sm: 8px;
+    --gap-md: 12px;
+    --gap-lg: 16px;
+    --gap-xl: 24px;
+    --gap-2xl: 32px;
+
+    /* Radius */
+    --radius: 16px;
+
+    /* Layout */
+    --sidebar-width: 260px;
+    --activity-bar-width: 48px;
+
+    /* Legacy shadcn variables - Light */
+    --background: 0 0% 96%;
+    --foreground: 0 0% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 10%;
+    --primary: 25 100% 60%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 92%;
+    --secondary-foreground: 0 0% 10%;
+    --muted: 0 0% 92%;
+    --muted-foreground: 0 0% 40%;
+    --accent: 25 100% 60%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 100% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 85%;
+    --input: 0 0% 85%;
+    --ring: 25 100% 60%;
+  }
+
+  .dark {
     /* OpenMan Design System - Dark Theme */
     --page-bg: #1A1A1A;
     --card-bg: #212121;
@@ -27,22 +88,7 @@
     --put-method: #FFAA00;
     --delete-method: #FF4444;
 
-    /* Spacing */
-    --gap-xs: 4px;
-    --gap-sm: 8px;
-    --gap-md: 12px;
-    --gap-lg: 16px;
-    --gap-xl: 24px;
-    --gap-2xl: 32px;
-
-    /* Radius */
-    --radius: 16px;
-
-    /* Layout */
-    --sidebar-width: 260px;
-    --activity-bar-width: 48px;
-
-    /* Legacy shadcn variables */
+    /* Legacy shadcn variables - Dark */
     --background: 0 0% 10%;
     --foreground: 0 0% 100%;
     --card: 0 0% 13%;

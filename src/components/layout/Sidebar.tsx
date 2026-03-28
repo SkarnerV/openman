@@ -12,6 +12,7 @@ import {
 import { useCollectionStore, type Collection } from "../../stores/useCollectionStore";
 import { useRequestStore, type HttpRequest } from "../../stores/useRequestStore";
 import { type CollectionItem, type RequestCollectionItem } from "../../services/storageService";
+import { CreateCollectionModal } from "../common/CreateCollectionModal";
 
 export function Sidebar() {
   const navigate = useNavigate();
@@ -19,6 +20,7 @@ export function Sidebar() {
   const [expandedCollections, setExpandedCollections] = useState<
     Record<string, boolean>
   >({});
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   const { collections, createCollection, deleteCollection } = useCollectionStore();
   const { setCurrentRequest, setResponse, setError } = useRequestStore();
@@ -61,15 +63,8 @@ export function Sidebar() {
     }
   };
 
-  const handleCreateCollection = async () => {
-    const name = prompt("Enter collection name:");
-    if (name?.trim()) {
-      try {
-        await createCollection(name.trim());
-      } catch (err) {
-        console.error("Failed to create collection:", err);
-      }
-    }
+  const handleCreateCollection = async (name: string, description?: string) => {
+    await createCollection(name, description);
   };
 
   const isRequestItem = (item: CollectionItem): item is HttpRequest | RequestCollectionItem => {
@@ -81,7 +76,13 @@ export function Sidebar() {
   );
 
   return (
-    <div className="w-[260px] h-full bg-page-bg flex flex-col border-r border-elevated-bg">
+    <>
+      <CreateCollectionModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onCreate={handleCreateCollection}
+      />
+      <div className="w-[260px] h-full bg-page-bg flex flex-col border-r border-elevated-bg">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-4">
         <div className="flex items-center gap-2">
@@ -132,7 +133,7 @@ export function Sidebar() {
             Collections
           </span>
           <button
-            onClick={handleCreateCollection}
+            onClick={() => setIsCreateModalOpen(true)}
             className="p-1 hover:bg-elevated-bg rounded transition-colors"
             title="New Collection"
           >
@@ -166,6 +167,7 @@ export function Sidebar() {
         )}
       </div>
     </div>
+  </>
   );
 }
 

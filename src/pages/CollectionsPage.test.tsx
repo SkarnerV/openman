@@ -367,7 +367,31 @@ describe('CollectionsPage', () => {
     expect(deleteButton).toBeInTheDocument();
   });
 
-  it('calls deleteCollection when confirming delete', async () => {
+  it('shows delete confirmation dialog when clicking delete', async () => {
+    useCollectionStore.setState({
+      collections: [
+        {
+          id: '1',
+          name: 'API Collection',
+          variables: [],
+          items: [],
+          createdAt: '2024-01-01T00:00:00Z',
+          updatedAt: '2024-01-01T00:00:00Z',
+        },
+      ],
+    });
+
+    renderWithRouter(<CollectionsPage />);
+
+    const deleteButton = screen.getByTitle('Delete');
+    fireEvent.click(deleteButton);
+
+    // The confirm dialog should appear
+    expect(screen.getByText('Delete Collection')).toBeInTheDocument();
+    expect(screen.getByText(/Are you sure you want to delete/)).toBeInTheDocument();
+  });
+
+  it('calls deleteCollection when confirming delete in dialog', async () => {
     const mockDelete = vi.fn().mockResolvedValue(undefined);
     useCollectionStore.setState({
       collections: [
@@ -383,14 +407,48 @@ describe('CollectionsPage', () => {
       deleteCollection: mockDelete,
     });
 
-    // Mock confirm dialog
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
-
     renderWithRouter(<CollectionsPage />);
 
+    // Click delete button to open dialog
     const deleteButton = screen.getByTitle('Delete');
     fireEvent.click(deleteButton);
 
+    // Click confirm button in dialog (the one with red background)
+    const confirmButtons = screen.getAllByRole('button', { name: 'Delete' });
+    const confirmDialogButton = confirmButtons.find(btn =>
+      btn.classList.contains('bg-delete-method')
+    );
+    fireEvent.click(confirmDialogButton!);
+
     expect(mockDelete).toHaveBeenCalledWith('1');
+  });
+
+  it('does not delete when canceling delete dialog', async () => {
+    const mockDelete = vi.fn().mockResolvedValue(undefined);
+    useCollectionStore.setState({
+      collections: [
+        {
+          id: '1',
+          name: 'API Collection',
+          variables: [],
+          items: [],
+          createdAt: '2024-01-01T00:00:00Z',
+          updatedAt: '2024-01-01T00:00:00Z',
+        },
+      ],
+      deleteCollection: mockDelete,
+    });
+
+    renderWithRouter(<CollectionsPage />);
+
+    // Click delete button to open dialog
+    const deleteButton = screen.getByTitle('Delete');
+    fireEvent.click(deleteButton);
+
+    // Click cancel button in dialog
+    const cancelButton = screen.getByRole('button', { name: 'Cancel' });
+    fireEvent.click(cancelButton);
+
+    expect(mockDelete).not.toHaveBeenCalled();
   });
 });

@@ -6,6 +6,7 @@ import {
   type EnvironmentVariable,
 } from "../stores/useEnvironmentStore";
 import { CreateEnvironmentModal } from "../components/common/CreateEnvironmentModal";
+import { ConfirmDialog } from "../components/common/ConfirmDialog";
 
 export function EnvironmentsPage() {
   const {
@@ -24,6 +25,8 @@ export function EnvironmentsPage() {
   const [newVarKey, setNewVarKey] = useState("");
   const [newVarValue, setNewVarValue] = useState("");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const selectedEnv = environments.find((e) => e.id === selectedEnvId);
 
@@ -48,9 +51,10 @@ export function EnvironmentsPage() {
       });
       setNewVarKey("");
       setNewVarValue("");
+      setError(null);
     } catch (err) {
       console.error("Failed to add variable:", err);
-      alert("Failed to add variable");
+      setError("Failed to add variable");
     }
   };
 
@@ -68,17 +72,19 @@ export function EnvironmentsPage() {
     await updateEnvironment(selectedEnvId!, { variables: newVars });
   };
 
-  const handleDeleteEnvironment = async (id: string) => {
-    if (confirm("Are you sure you want to delete this environment?")) {
-      try {
-        await deleteEnvironment(id);
-        if (selectedEnvId === id) {
-          setSelectedEnvId(environments[0]?.id || null);
-        }
-      } catch (err) {
-        console.error("Failed to delete environment:", err);
-        alert("Failed to delete environment");
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      await deleteEnvironment(deleteTarget.id);
+      if (selectedEnvId === deleteTarget.id) {
+        setSelectedEnvId(environments[0]?.id || null);
       }
+      setError(null);
+    } catch (err) {
+      console.error("Failed to delete environment:", err);
+      setError("Failed to delete environment");
+    } finally {
+      setDeleteTarget(null);
     }
   };
 
@@ -140,166 +146,185 @@ export function EnvironmentsPage() {
         onClose={() => setIsCreateModalOpen(false)}
         onCreate={handleCreateEnvironment}
       />
-      <div className="h-full flex gap-6 p-8 overflow-hidden">
-      {/* Environment List */}
-      <div className="w-80 bg-card-bg rounded-radius p-5 flex flex-col">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-semibold">Environments</h2>
+      <ConfirmDialog
+        isOpen={deleteTarget !== null}
+        title="Delete Environment"
+        message={`Are you sure you want to delete "${deleteTarget?.name}"? This action cannot be undone.`}
+        confirmLabel="Delete"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
+      {error && (
+        <div className="fixed top-4 right-4 z-50 p-4 bg-delete-method/20 text-delete-method rounded-radius">
+          {error}
           <button
-            onClick={() => setIsCreateModalOpen(true)}
-            className="p-2 hover:bg-elevated-bg rounded-radius transition-colors"
-            title="New Environment"
+            onClick={() => setError(null)}
+            className="ml-4 text-text-secondary hover:text-delete-method"
           >
-            <Plus className="w-5 h-5 text-accent-orange" />
+            ×
           </button>
         </div>
-        <div className="flex-1 space-y-1 overflow-auto">
-          {environments.map((env) => (
-            <div
-              key={env.id}
-              onClick={() => setSelectedEnvId(env.id)}
-              className={`flex items-center justify-between p-3 rounded-radius cursor-pointer transition-colors ${
-                selectedEnvId === env.id
-                  ? "bg-elevated-bg"
-                  : "hover:bg-elevated-bg/50"
-              }`}
+      )}
+      <div className="h-full flex gap-6 p-8 overflow-hidden">
+        {/* Environment List */}
+        <div className="w-80 bg-card-bg rounded-radius p-5 flex flex-col">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-semibold">Environments</h2>
+            <button
+              onClick={() => setIsCreateModalOpen(true)}
+              className="p-2 hover:bg-elevated-bg rounded-radius transition-colors"
+              title="New Environment"
             >
-              <div className="flex items-center gap-3">
-                <Globe className="w-4 h-4 text-text-secondary" />
-                <span className="text-sm">{env.name}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                {activeEnvironment?.id === env.id && (
-                  <span className="px-2 py-0.5 text-xs bg-accent-teal/20 text-accent-teal rounded">
-                    Active
-                  </span>
-                )}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDeleteEnvironment(env.id);
-                  }}
-                  className="p-1 hover:bg-card-bg rounded opacity-0 group-hover:opacity-100"
-                >
-                  <Trash2 className="w-4 h-4 text-text-secondary hover:text-delete-method" />
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Variable Editor */}
-      <div className="flex-1 bg-card-bg rounded-radius p-5 flex flex-col">
-        {selectedEnv ? (
-          <>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-semibold text-lg">{selectedEnv.name}</h2>
-              <button
-                onClick={() =>
-                  handleSetActive(
-                    activeEnvironment?.id === selectedEnv.id
-                      ? null
-                      : (selectedEnv ?? null),
-                  )
-                }
-                className={`px-3 py-1.5 rounded-radius text-sm transition-colors ${
-                  activeEnvironment?.id === selectedEnv.id
-                    ? "bg-accent-teal text-text-on-accent"
-                    : "bg-elevated-bg text-text-secondary hover:text-text-primary"
+              <Plus className="w-5 h-5 text-accent-orange" />
+            </button>
+          </div>
+          <div className="flex-1 space-y-1 overflow-auto">
+            {environments.map((env) => (
+              <div
+                key={env.id}
+                onClick={() => setSelectedEnvId(env.id)}
+                className={`group flex items-center justify-between p-3 rounded-radius cursor-pointer transition-colors ${
+                  selectedEnvId === env.id
+                    ? "bg-elevated-bg"
+                    : "hover:bg-elevated-bg/50"
                 }`}
               >
-                {activeEnvironment?.id === selectedEnv.id
-                  ? "Active"
-                  : "Set Active"}
-              </button>
-            </div>
-
-            {/* Add Variable Form */}
-            <div className="flex gap-3 mb-4 p-3 bg-elevated-bg rounded-radius">
-              <input
-                type="text"
-                value={newVarKey}
-                onChange={(e) => setNewVarKey(e.target.value)}
-                placeholder="Variable name"
-                className="flex-1 px-3 py-2 bg-card-bg rounded-radius text-sm focus:outline-none focus:ring-2 focus:ring-accent-orange"
-                onKeyDown={(e) => e.key === "Enter" && handleAddVariable()}
-              />
-              <input
-                type="text"
-                value={newVarValue}
-                onChange={(e) => setNewVarValue(e.target.value)}
-                placeholder="Value"
-                className="flex-1 px-3 py-2 bg-card-bg rounded-radius text-sm focus:outline-none focus:ring-2 focus:ring-accent-orange"
-                onKeyDown={(e) => e.key === "Enter" && handleAddVariable()}
-              />
-              <button
-                onClick={handleAddVariable}
-                disabled={!newVarKey.trim()}
-                className="px-4 py-2 bg-accent-orange text-text-on-accent rounded-radius text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Add
-              </button>
-            </div>
-
-            {/* Variables List */}
-            <div className="flex-1 overflow-auto">
-              {selectedEnv.variables.length === 0 ? (
-                <div className="text-center py-8 text-text-secondary">
-                  No variables yet. Add your first variable above.
+                <div className="flex items-center gap-3">
+                  <Globe className="w-4 h-4 text-text-secondary" />
+                  <span className="text-sm">{env.name}</span>
                 </div>
-              ) : (
-                <div className="space-y-2">
-                  {selectedEnv.variables.map((variable, index) => (
-                    <div
-                      key={index}
-                      className={`flex items-center gap-3 p-3 rounded-radius ${
-                        variable.enabled
-                          ? "bg-elevated-bg"
-                          : "bg-elevated-bg/50"
-                      }`}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={variable.enabled}
-                        onChange={() => handleToggleVariable(index)}
-                        className="w-4 h-4"
-                      />
-                      <span className="font-mono text-sm text-accent-orange">
-                        {`{{${variable.key}}}`}
-                      </span>
-                      <span className="flex-1 text-sm text-text-secondary truncate">
-                        {variable.value}
-                      </span>
-                      <button
-                        onClick={() => {
-                          navigator.clipboard.writeText(`{{${variable.key}}}`);
-                        }}
-                        className="p-1 hover:bg-card-bg rounded"
-                        title="Copy variable"
-                      >
-                        <Copy className="w-4 h-4 text-text-secondary" />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteVariable(index)}
-                        className="p-1 hover:bg-card-bg rounded"
-                        title="Delete"
-                      >
-                        <Trash2 className="w-4 h-4 text-delete-method" />
-                      </button>
-                    </div>
-                  ))}
+                <div className="flex items-center gap-1">
+                  {activeEnvironment?.id === env.id && (
+                    <span className="px-2 py-0.5 text-xs bg-accent-teal/20 text-accent-teal rounded">
+                      Active
+                    </span>
+                  )}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setDeleteTarget({ id: env.id, name: env.name });
+                    }}
+                    className="p-1 hover:bg-card-bg rounded opacity-0 group-hover:opacity-100"
+                  >
+                    <Trash2 className="w-4 h-4 text-text-secondary hover:text-delete-method" />
+                  </button>
                 </div>
-              )}
-            </div>
-          </>
-        ) : (
-          <div className="flex-1 flex items-center justify-center text-text-secondary">
-            Select an environment to view variables
+              </div>
+            ))}
           </div>
-        )}
+        </div>
+
+        {/* Variable Editor */}
+        <div className="flex-1 bg-card-bg rounded-radius p-5 flex flex-col">
+          {selectedEnv ? (
+            <>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="font-semibold text-lg">{selectedEnv.name}</h2>
+                <button
+                  onClick={() =>
+                    handleSetActive(
+                      activeEnvironment?.id === selectedEnv.id
+                        ? null
+                        : (selectedEnv ?? null),
+                    )
+                  }
+                  className={`px-3 py-1.5 rounded-radius text-sm transition-colors ${
+                    activeEnvironment?.id === selectedEnv.id
+                      ? "bg-accent-teal text-text-on-accent"
+                      : "bg-elevated-bg text-text-secondary hover:text-text-primary"
+                  }`}
+                >
+                  {activeEnvironment?.id === selectedEnv.id
+                    ? "Active"
+                    : "Set Active"}
+                </button>
+              </div>
+
+              {/* Add Variable Form */}
+              <div className="flex gap-3 mb-4 p-3 bg-elevated-bg rounded-radius">
+                <input
+                  type="text"
+                  value={newVarKey}
+                  onChange={(e) => setNewVarKey(e.target.value)}
+                  placeholder="Variable name"
+                  className="flex-1 px-3 py-2 bg-card-bg rounded-radius text-sm focus:outline-none focus:ring-2 focus:ring-accent-orange"
+                  onKeyDown={(e) => e.key === "Enter" && handleAddVariable()}
+                />
+                <input
+                  type="text"
+                  value={newVarValue}
+                  onChange={(e) => setNewVarValue(e.target.value)}
+                  placeholder="Value"
+                  className="flex-1 px-3 py-2 bg-card-bg rounded-radius text-sm focus:outline-none focus:ring-2 focus:ring-accent-orange"
+                  onKeyDown={(e) => e.key === "Enter" && handleAddVariable()}
+                />
+                <button
+                  onClick={handleAddVariable}
+                  disabled={!newVarKey.trim()}
+                  className="px-4 py-2 bg-accent-orange text-text-on-accent rounded-radius text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Add
+                </button>
+              </div>
+
+              {/* Variables List */}
+              <div className="flex-1 overflow-auto">
+                {selectedEnv.variables.length === 0 ? (
+                  <div className="text-center py-8 text-text-secondary">
+                    No variables yet. Add your first variable above.
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {selectedEnv.variables.map((variable, index) => (
+                      <div
+                        key={index}
+                        className={`flex items-center gap-3 p-3 rounded-radius ${
+                          variable.enabled
+                            ? "bg-elevated-bg"
+                            : "bg-elevated-bg/50"
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={variable.enabled}
+                          onChange={() => handleToggleVariable(index)}
+                          className="w-4 h-4"
+                        />
+                        <span className="font-mono text-sm text-accent-orange">
+                          {`{{${variable.key}}}`}
+                        </span>
+                        <span className="flex-1 text-sm text-text-secondary truncate">
+                          {variable.value}
+                        </span>
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(`{{${variable.key}}}`);
+                          }}
+                          className="p-1 hover:bg-card-bg rounded"
+                          title="Copy variable"
+                        >
+                          <Copy className="w-4 h-4 text-text-secondary" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteVariable(index)}
+                          className="p-1 hover:bg-card-bg rounded"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-4 h-4 text-delete-method" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </>
+          ) : (
+            <div className="flex-1 flex items-center justify-center text-text-secondary">
+              Select an environment to view variables
+            </div>
+          )}
+        </div>
       </div>
-    </div>
     </>
   );
 }

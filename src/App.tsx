@@ -10,6 +10,7 @@ import { SettingsPage } from "./pages/SettingsPage";
 import { useWorkspaceStore } from "./stores/useWorkspaceStore";
 import { useCollectionStore } from "./stores/useCollectionStore";
 import { useEnvironmentStore } from "./stores/useEnvironmentStore";
+import { useThemeStore } from "./stores/useThemeStore";
 import { Loader2, AlertCircle } from "lucide-react";
 
 function AppContent() {
@@ -17,12 +18,18 @@ function AppContent() {
   const { initialize: initWorkspace, initialized, currentWorkspace, error: workspaceError } = useWorkspaceStore();
   const { loadCollections } = useCollectionStore();
   const { loadEnvironments } = useEnvironmentStore();
+  const { applyTheme } = useThemeStore();
   const navigate = useNavigate();
 
   // Initialize workspace and load data on startup
   useEffect(() => {
     initWorkspace();
   }, [initWorkspace]);
+
+  // Apply theme on app load
+  useEffect(() => {
+    applyTheme();
+  }, [applyTheme]);
 
   // Load collections and environments when workspace is ready
   useEffect(() => {

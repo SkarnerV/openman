@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Settings, PenTool, Keyboard, Moon, Sun, Monitor } from "lucide-react";
+import { useThemeStore } from "../stores/useThemeStore";
 
 type SettingsSection = "general" | "editor" | "shortcuts";
 
@@ -51,7 +52,7 @@ export function SettingsPage() {
 }
 
 function GeneralSettings() {
-  const [theme, setTheme] = useState<"light" | "dark" | "system">("dark");
+  const { theme, setTheme } = useThemeStore();
 
   return (
     <div>

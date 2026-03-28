@@ -1,14 +1,23 @@
 import { useState } from "react";
-import { Search, Plus, FolderOpen, MoreVertical, Trash2, Edit2 } from "lucide-react";
+import { Search, Plus, FolderOpen, Edit2, Trash2 } from "lucide-react";
 import { useCollectionStore } from "../stores/useCollectionStore";
 import { useRequestStore } from "../stores/useRequestStore";
 import { useNavigate } from "react-router-dom";
+import { CreateCollectionModal } from "../components/common/CreateCollectionModal";
+import { ConfirmDialog } from "../components/common/ConfirmDialog";
+
+interface EditingCollection {
+  id: string;
+  name: string;
+  description: string;
+}
 
 export function CollectionsPage() {
   const {
     collections,
     isLoading,
     createCollection,
+    updateCollection,
     deleteCollection,
   } = useCollectionStore();
   const {
@@ -17,25 +26,14 @@ export function CollectionsPage() {
     setError,
   } = useRequestStore();
   const [searchQuery, setSearchQuery] = useState("");
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+  const [editingCollection, setEditingCollection] = useState<EditingCollection | null>(null);
   const navigate = useNavigate();
-
-  // Collections are now loaded in App.tsx
 
   const filteredCollections = collections.filter((c) =>
     c.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
-
-  const handleNewCollection = async () => {
-    const name = prompt("Enter collection name:");
-    if (name?.trim()) {
-      try {
-        await createCollection(name.trim());
-      } catch (err) {
-        console.error("Failed to create collection:", err);
-        alert("Failed to create collection");
-      }
-    }
-  };
 
   const handleNewRequest = () => {
     setCurrentRequest(null);
@@ -44,14 +42,32 @@ export function CollectionsPage() {
     navigate("/request");
   };
 
-  const handleDeleteCollection = async (id: string) => {
-    if (confirm("Are you sure you want to delete this collection?")) {
-      try {
-        await deleteCollection(id);
-      } catch (err) {
-        console.error("Failed to delete collection:", err);
-        alert("Failed to delete collection");
-      }
+  const handleCreateCollection = async (name: string, description?: string) => {
+    await createCollection(name, description);
+  };
+
+  const handleDeleteCollection = async () => {
+    if (deleteTarget) {
+      await deleteCollection(deleteTarget.id);
+      setDeleteTarget(null);
+    }
+  };
+
+  const handleStartEdit = (id: string, name: string, description: string) => {
+    setEditingCollection({ id, name, description: description || "" });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingCollection(null);
+  };
+
+  const handleSaveEdit = async () => {
+    if (editingCollection && editingCollection.name.trim()) {
+      await updateCollection(editingCollection.id, {
+        name: editingCollection.name.trim(),
+        description: editingCollection.description.trim() || undefined,
+      });
+      setEditingCollection(null);
     }
   };
 
@@ -67,116 +83,178 @@ export function CollectionsPage() {
   // True Empty State
   if (collections.length === 0) {
     return (
-      <div className="h-full flex flex-col items-center justify-center p-8">
-        <div className="text-center max-w-md">
-          <div className="w-16 h-16 rounded-full bg-card-bg flex items-center justify-center mx-auto mb-6">
-            <FolderOpen className="w-8 h-8 text-text-secondary" />
+      <>
+        <CreateCollectionModal
+          isOpen={isCreateModalOpen}
+          onClose={() => setIsCreateModalOpen(false)}
+          onCreate={handleCreateCollection}
+        />
+        <div className="h-full flex flex-col items-center justify-center p-8">
+          <div className="text-center max-w-md">
+            <div className="w-16 h-16 rounded-full bg-card-bg flex items-center justify-center mx-auto mb-6">
+              <FolderOpen className="w-8 h-8 text-text-secondary" />
+            </div>
+            <h2 className="text-xl font-semibold mb-2 font-display">
+              No Collections Yet
+            </h2>
+            <p className="text-text-secondary mb-6">
+              Create your first collection to organize and save your API requests.
+            </p>
+            <button
+              onClick={() => setIsCreateModalOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-accent-orange text-text-on-accent rounded-radius font-semibold mx-auto hover:opacity-90 transition-opacity"
+            >
+              <Plus className="w-5 h-5" />
+              Create Collection
+            </button>
           </div>
-          <h2 className="text-xl font-semibold mb-2 font-display">
-            No Collections Yet
-          </h2>
-          <p className="text-text-secondary mb-6">
-            Create your first collection to organize and save your API requests.
-          </p>
-          <button
-            onClick={handleNewCollection}
-            className="flex items-center gap-2 px-4 py-2 bg-accent-orange text-text-on-accent rounded-radius font-semibold mx-auto hover:opacity-90 transition-opacity"
-          >
-            <Plus className="w-5 h-5" />
-            Create Collection
-          </button>
         </div>
-      </div>
+      </>
     );
   }
 
   return (
-    <div className="h-full flex flex-col p-8 overflow-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold font-display">Collections</h1>
-        <button
-          onClick={handleNewRequest}
-          className="flex items-center gap-2 px-4 py-2 bg-accent-orange text-text-on-accent rounded-radius font-semibold hover:opacity-90 transition-opacity"
-        >
-          <Plus className="w-5 h-5" />
-          New Request
-        </button>
-      </div>
-
-      {/* Search */}
-      <div className="relative mb-6">
-        <Search className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary" />
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search collections..."
-          className="w-full pl-12 pr-4 py-3 bg-card-bg rounded-radius text-sm focus:outline-none focus:ring-2 focus:ring-accent-orange"
-        />
-      </div>
-
-      {/* Collections Grid */}
-      {filteredCollections.length === 0 ? (
-        <div className="text-center py-12 text-text-secondary">
-          No collections found matching "{searchQuery}"
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredCollections.map((collection) => (
-            <div
-              key={collection.id}
-              className="bg-card-bg rounded-radius p-5 hover:bg-elevated-bg transition-colors group"
+    <>
+      <CreateCollectionModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onCreate={handleCreateCollection}
+      />
+      <ConfirmDialog
+        isOpen={deleteTarget !== null}
+        title="Delete Collection"
+        message={`Are you sure you want to delete "${deleteTarget?.name}"? This action cannot be undone.`}
+        confirmLabel="Delete"
+        onConfirm={handleDeleteCollection}
+        onCancel={() => setDeleteTarget(null)}
+      />
+      <div className="h-full flex flex-col p-8 overflow-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-3xl font-bold font-display">Collections</h1>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setIsCreateModalOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-elevated-bg rounded-radius font-semibold hover:bg-card-bg transition-colors"
             >
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-accent-orange/20 flex items-center justify-center">
-                    <FolderOpen className="w-5 h-5 text-accent-orange" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold">{collection.name}</h3>
-                    <p className="text-xs text-text-secondary">
-                      {collection.items?.length || 0} request
-                      {(collection.items?.length || 0) !== 1 ? "s" : ""}
-                    </p>
-                  </div>
-                </div>
-                <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button className="p-1 hover:bg-card-bg rounded">
-                    <MoreVertical className="w-4 h-4 text-text-secondary" />
-                  </button>
-                </div>
-              </div>
-              {collection.description && (
-                <p className="text-sm text-text-secondary mb-3 line-clamp-2">
-                  {collection.description}
-                </p>
-              )}
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-text-secondary">
-                  Updated{" "}
-                  {new Date(collection.updatedAt).toLocaleDateString()}
-                </span>
-                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button
-                    className="p-1.5 hover:bg-card-bg rounded"
-                    title="Edit"
-                  >
-                    <Edit2 className="w-4 h-4 text-text-secondary" />
-                  </button>
-                  <button
-                    onClick={() => handleDeleteCollection(collection.id)}
-                    className="p-1.5 hover:bg-card-bg rounded"
-                    title="Delete"
-                  >
-                    <Trash2 className="w-4 h-4 text-delete-method" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
+              <Plus className="w-5 h-5" />
+              New Collection
+            </button>
+            <button
+              onClick={handleNewRequest}
+              className="flex items-center gap-2 px-4 py-2 bg-accent-orange text-text-on-accent rounded-radius font-semibold hover:opacity-90 transition-opacity"
+            >
+              <Plus className="w-5 h-5" />
+              New Request
+            </button>
+          </div>
         </div>
-      )}
-    </div>
+
+        {/* Search */}
+        <div className="relative mb-6">
+          <Search className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search collections..."
+            className="w-full pl-12 pr-4 py-3 bg-card-bg rounded-radius text-sm focus:outline-none focus:ring-2 focus:ring-accent-orange"
+          />
+        </div>
+
+        {/* Collections Grid */}
+        {filteredCollections.length === 0 ? (
+          <div className="text-center py-12 text-text-secondary">
+            No collections found matching "{searchQuery}"
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredCollections.map((collection) => {
+              const isEditing = editingCollection?.id === collection.id;
+              return (
+                <div
+                  key={collection.id}
+                  className="bg-card-bg rounded-radius p-5 hover:bg-elevated-bg transition-colors group"
+                >
+                  <div className="flex items-start gap-3 mb-3">
+                    <div className="w-10 h-10 rounded-lg bg-accent-orange/20 flex items-center justify-center shrink-0">
+                      <FolderOpen className="w-5 h-5 text-accent-orange" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          value={editingCollection.name}
+                          onChange={(e) => setEditingCollection(prev => prev ? { ...prev, name: e.target.value } : null)}
+                          className="w-full px-2 py-1 bg-elevated-bg rounded text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-accent-orange"
+                          autoFocus
+                        />
+                      ) : (
+                        <h3 className="font-semibold truncate">{collection.name}</h3>
+                      )}
+                      <p className="text-xs text-text-secondary">
+                        {collection.items?.length || 0} request
+                        {(collection.items?.length || 0) !== 1 ? "s" : ""}
+                      </p>
+                    </div>
+                  </div>
+                  {isEditing ? (
+                    <textarea
+                      value={editingCollection.description}
+                      onChange={(e) => setEditingCollection(prev => prev ? { ...prev, description: e.target.value } : null)}
+                      placeholder="Description (optional)"
+                      className="w-full px-2 py-1 bg-elevated-bg rounded text-sm text-text-secondary mb-3 resize-none focus:outline-none focus:ring-2 focus:ring-accent-orange"
+                      rows={2}
+                    />
+                  ) : collection.description ? (
+                    <p className="text-sm text-text-secondary mb-3 line-clamp-2">
+                      {collection.description}
+                    </p>
+                  ) : null}
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-text-secondary">
+                      Updated {new Date(collection.updatedAt).toLocaleDateString()}
+                    </span>
+                    {isEditing ? (
+                      <div className="flex gap-1">
+                        <button
+                          onClick={handleCancelEdit}
+                          className="px-3 py-1 text-xs bg-elevated-bg rounded hover:bg-card-bg transition-colors"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={handleSaveEdit}
+                          className="px-3 py-1 text-xs bg-accent-orange text-text-on-accent rounded hover:opacity-90 transition-opacity"
+                        >
+                          Save
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={() => handleStartEdit(collection.id, collection.name, collection.description || "")}
+                          className="p-1.5 hover:bg-elevated-bg rounded"
+                          title="Edit"
+                        >
+                          <Edit2 className="w-4 h-4 text-text-secondary" />
+                        </button>
+                        <button
+                          onClick={() => setDeleteTarget({ id: collection.id, name: collection.name })}
+                          className="p-1.5 hover:bg-elevated-bg rounded"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-4 h-4 text-delete-method" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </>
   );
 }
