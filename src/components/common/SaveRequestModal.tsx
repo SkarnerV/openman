@@ -16,6 +16,7 @@ export function SaveRequestModal({ isOpen, onClose, request }: SaveRequestModalP
   const [isNewCollection, setIsNewCollection] = useState(false);
   const [newCollectionName, setNewCollectionName] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (collections.length > 0 && !selectedCollectionId) {
@@ -28,8 +29,10 @@ export function SaveRequestModal({ isOpen, onClose, request }: SaveRequestModalP
   }, [request.name]);
 
   const handleSave = async () => {
+    setError(null);
+
     if (!requestName.trim()) {
-      alert("Please enter a request name");
+      setError("Please enter a request name");
       return;
     }
 
@@ -40,7 +43,7 @@ export function SaveRequestModal({ isOpen, onClose, request }: SaveRequestModalP
       // Create new collection if needed
       if (isNewCollection) {
         if (!newCollectionName.trim()) {
-          alert("Please enter a collection name");
+          setError("Please enter a collection name");
           setIsSaving(false);
           return;
         }
@@ -49,7 +52,7 @@ export function SaveRequestModal({ isOpen, onClose, request }: SaveRequestModalP
       }
 
       if (!collectionId) {
-        alert("Please select or create a collection");
+        setError("Please select or create a collection");
         setIsSaving(false);
         return;
       }
@@ -66,7 +69,12 @@ export function SaveRequestModal({ isOpen, onClose, request }: SaveRequestModalP
       onClose();
     } catch (err) {
       console.error("Failed to save request:", err);
-      alert("Failed to save request");
+      const errorMessage = typeof err === 'string'
+        ? err
+        : err instanceof Error
+          ? err.message
+          : "Failed to save request";
+      setError(errorMessage);
     } finally {
       setIsSaving(false);
     }
@@ -88,18 +96,29 @@ export function SaveRequestModal({ isOpen, onClose, request }: SaveRequestModalP
           </button>
         </div>
 
+        {/* Error Message */}
+        {error && (
+          <div className="mb-4 p-3 bg-delete-method/10 text-delete-method rounded-radius text-sm">
+            {error}
+          </div>
+        )}
+
         {/* Request Name */}
         <div className="mb-4">
           <label className="block mb-2 text-sm text-text-secondary">
-            Request Name
+            Request Name <span className="text-delete-method">*</span>
           </label>
           <input
             type="text"
             value={requestName}
-            onChange={(e) => setRequestName(e.target.value)}
+            onChange={(e) => {
+              setRequestName(e.target.value);
+              setError(null);
+            }}
             placeholder="Enter request name"
             className="w-full px-4 py-3 bg-elevated-bg rounded-radius text-sm focus:outline-none focus:ring-2 focus:ring-accent-orange"
             autoFocus
+            onKeyDown={(e) => e.key === "Enter" && handleSave()}
           />
         </div>
 
@@ -113,12 +132,20 @@ export function SaveRequestModal({ isOpen, onClose, request }: SaveRequestModalP
               <input
                 type="text"
                 value={newCollectionName}
-                onChange={(e) => setNewCollectionName(e.target.value)}
+                onChange={(e) => {
+                  setNewCollectionName(e.target.value);
+                  setError(null);
+                }}
                 placeholder="Enter collection name"
                 className="flex-1 px-4 py-3 bg-elevated-bg rounded-radius text-sm focus:outline-none focus:ring-2 focus:ring-accent-orange"
+                onKeyDown={(e) => e.key === "Enter" && handleSave()}
               />
               <button
-                onClick={() => setIsNewCollection(false)}
+                onClick={() => {
+                  setIsNewCollection(false);
+                  setNewCollectionName("");
+                  setError(null);
+                }}
                 className="px-4 py-3 bg-elevated-bg rounded-radius text-sm hover:bg-card-bg transition-colors"
               >
                 Cancel
@@ -128,8 +155,11 @@ export function SaveRequestModal({ isOpen, onClose, request }: SaveRequestModalP
             <div className="flex gap-2">
               <select
                 value={selectedCollectionId}
-                onChange={(e) => setSelectedCollectionId(e.target.value)}
-                className="flex-1 px-4 py-3 bg-elevated-bg rounded-radius text-sm focus:outline-none"
+                onChange={(e) => {
+                  setSelectedCollectionId(e.target.value);
+                  setError(null);
+                }}
+                className="flex-1 px-4 py-3 bg-elevated-bg rounded-radius text-sm focus:outline-none focus:ring-2 focus:ring-accent-orange"
               >
                 {collections.length === 0 && (
                   <option value="">No collections</option>

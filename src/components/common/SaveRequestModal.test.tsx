@@ -275,8 +275,7 @@ describe('SaveRequestModal', () => {
     expect(mockOnClose).toHaveBeenCalled();
   });
 
-  it('shows alert when saving without request name', async () => {
-    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
+  it('shows error when saving without request name', async () => {
     const user = userEvent.setup();
 
     render(
@@ -294,7 +293,7 @@ describe('SaveRequestModal', () => {
     const saveButton = screen.getByRole('button', { name: /save request/i });
     await user.click(saveButton);
 
-    expect(alertSpy).toHaveBeenCalledWith('Please enter a request name');
-    alertSpy.mockRestore();
+    // Should show error message in the modal
+    expect(screen.getByText('Please enter a request name')).toBeInTheDocument();
   });
 });

@@ -7,12 +7,14 @@ import {
   FolderOpen,
   ChevronRight,
   Globe,
+  PanelLeftClose,
   PanelLeft,
 } from "lucide-react";
 import { useCollectionStore, type Collection } from "../../stores/useCollectionStore";
 import { useRequestStore, type HttpRequest } from "../../stores/useRequestStore";
 import { type CollectionItem, type RequestCollectionItem } from "../../services/storageService";
 import { CreateCollectionModal } from "../common/CreateCollectionModal";
+import { useSettingsStore } from "../../stores/useSettingsStore";
 
 export function Sidebar() {
   const navigate = useNavigate();
@@ -21,6 +23,7 @@ export function Sidebar() {
     Record<string, boolean>
   >({});
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const { sidebarVisible, toggleSidebar } = useSettingsStore();
 
   const { collections, createCollection, deleteCollection } = useCollectionStore();
   const { setCurrentRequest, setResponse, setError } = useRequestStore();
@@ -75,6 +78,18 @@ export function Sidebar() {
     c.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  if (!sidebarVisible) {
+    return (
+      <button
+        onClick={toggleSidebar}
+        className="w-12 h-full bg-page-bg border-r border-elevated-bg flex items-center justify-center hover:bg-elevated-bg transition-colors"
+        title="Show sidebar"
+      >
+        <PanelLeft className="w-5 h-5 text-text-secondary" />
+      </button>
+    );
+  }
+
   return (
     <>
       <CreateCollectionModal
@@ -91,8 +106,12 @@ export function Sidebar() {
           </div>
           <span className="font-semibold text-lg font-display">Openman</span>
         </div>
-        <button className="p-2 hover:bg-elevated-bg rounded-radius transition-colors">
-          <PanelLeft className="w-4 h-4 text-text-secondary" />
+        <button
+          onClick={toggleSidebar}
+          className="p-2 hover:bg-elevated-bg rounded-radius transition-colors"
+          title="Hide sidebar"
+        >
+          <PanelLeftClose className="w-4 h-4 text-text-secondary" />
         </button>
       </div>
 
