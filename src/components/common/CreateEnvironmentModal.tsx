@@ -25,7 +25,13 @@ export function CreateEnvironmentModal({ isOpen, onClose, onCreate }: CreateEnvi
       setName("");
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create environment");
+      // Tauri errors might be strings or have different structure
+      const errorMessage = typeof err === 'string'
+        ? err
+        : err instanceof Error
+          ? err.message
+          : String(err);
+      setError(errorMessage || "Failed to create environment");
     } finally {
       setIsCreating(false);
     }

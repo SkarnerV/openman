@@ -115,14 +115,14 @@ export async function createWorkspace(
 
 // Collection operations
 export async function getCollections(workspaceId: string): Promise<Collection[]> {
-  return invoke("get_collections", { workspaceId });
+  return invoke("get_collections", { workspace_id: workspaceId });
 }
 
 export async function getCollection(
   workspaceId: string,
   collectionId: string
 ): Promise<Collection> {
-  return invoke("get_collection", { workspaceId, collectionId });
+  return invoke("get_collection", { workspace_id: workspaceId, collection_id: collectionId });
 }
 
 export async function createCollection(
@@ -130,21 +130,21 @@ export async function createCollection(
   name: string,
   description?: string
 ): Promise<Collection> {
-  return invoke("create_collection", { workspaceId, name, description });
+  return invoke("create_collection", { workspace_id: workspaceId, name, description });
 }
 
 export async function updateCollection(
   workspaceId: string,
   collection: Collection
 ): Promise<void> {
-  return invoke("update_collection", { workspaceId, collection });
+  return invoke("update_collection", { workspace_id: workspaceId, collection });
 }
 
 export async function deleteCollection(
   workspaceId: string,
   collectionId: string
 ): Promise<void> {
-  return invoke("delete_collection", { workspaceId, collectionId });
+  return invoke("delete_collection", { workspace_id: workspaceId, collection_id: collectionId });
 }
 
 // Environment operations
@@ -204,11 +204,11 @@ export async function importPostmanCollection(
   workspaceId: string,
   json: string
 ): Promise<Collection> {
-  return invoke("import_postman_collection", { workspaceId, json });
+  return invoke("import_postman_collection", { workspace_id: workspaceId, json });
 }
 
 export async function exportPostmanCollection(
   collectionId: string
 ): Promise<string> {
-  return invoke("export_postman_collection", { collectionId });
+  return invoke("export_postman_collection", { collection_id: collectionId });
 }
