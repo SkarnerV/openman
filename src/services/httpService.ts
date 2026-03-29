@@ -104,6 +104,13 @@ function transformRequest(request: HttpRequest, variables: Map<string, string>):
         mode: "json",
         content: substitutedBody,
       };
+    } else if (request.body.mode === "xml") {
+      // Map xml to raw with xml language
+      rustRequest.body = {
+        mode: "raw",
+        content: substitutedBody,
+        language: "xml",
+      };
     } else if (request.body.mode === "raw") {
       rustRequest.body = {
         mode: "raw",

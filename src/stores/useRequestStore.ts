@@ -40,14 +40,17 @@ export interface Header {
   enabled: boolean;
 }
 
+export type BodyType =
+  | "none"
+  | "json"
+  | "xml"
+  | "form-data"
+  | "x-www-form-urlencoded"
+  | "raw"
+  | "binary";
+
 export interface RequestBody {
-  mode:
-    | "none"
-    | "json"
-    | "form-data"
-    | "x-www-form-urlencoded"
-    | "raw"
-    | "binary";
+  mode: BodyType;
   content: string;
   rawLanguage?: "json" | "xml" | "html" | "text";
 }

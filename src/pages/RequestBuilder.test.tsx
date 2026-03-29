@@ -285,7 +285,8 @@ describe('RequestBuilder', () => {
     const jsonOption = screen.getByText('JSON');
     await user.click(jsonOption);
 
-    expect(screen.getByPlaceholderText(/"key": "value"/i)).toBeInTheDocument();
+    // Verify Monaco Editor loading state is shown
+    expect(screen.getByText(/Loading editor/i)).toBeInTheDocument();
   });
 
   it('disables Send button when URL is empty', async () => {

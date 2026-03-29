@@ -23,6 +23,7 @@
   "author": "Skarner Han",
   "license": "MIT",
   "dependencies": {
+    "@monaco-editor/react": "^4.7.0",
     "@tauri-apps/api": "^2.2.0",
     "@tauri-apps/plugin-shell": "^2.2.0",
     "clsx": "^2.1.1",

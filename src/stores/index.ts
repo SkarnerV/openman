@@ -9,6 +9,7 @@ export type {
   RequestBody,
   HttpMethod,
   AuthConfig,
+  BodyType,
 } from "./useRequestStore";
 
 export { useCollectionStore } from "./useCollectionStore";

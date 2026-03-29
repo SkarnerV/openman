@@ -7,7 +7,8 @@ import { MethodSelect } from "../components/common/MethodSelect";
 import { Checkbox } from "../components/common/Checkbox";
 import { RadioGroup } from "../components/common/RadioGroup";
 import { Select } from "../components/common/Select";
-import type { HttpRequest, HttpMethod, Header, QueryParam, AuthConfig } from "../stores/useRequestStore";
+import { MonacoEditor } from "../components/common/MonacoEditor";
+import type { HttpRequest, HttpMethod, Header, QueryParam, AuthConfig, BodyType } from "../stores/useRequestStore";
 
 // Keyboard shortcuts helper
 function useKeyboardShortcuts(handlers: Record<string, () => void>) {
@@ -59,8 +60,8 @@ export function RequestBuilder() {
   const [body, setBody] = useState<string>(
     currentRequest?.body?.content || ""
   );
-  const [bodyType, setBodyType] = useState<"none" | "json" | "raw">(
-    (currentRequest?.body?.mode as "none" | "json" | "raw") || "none"
+  const [bodyType, setBodyType] = useState<BodyType>(
+    (currentRequest?.body?.mode as BodyType) || "none"
   );
   const [auth, setAuth] = useState<AuthConfig>(
     currentRequest?.auth || { type: "none" }
@@ -99,7 +100,7 @@ export function RequestBuilder() {
       setParams(currentRequest.params || []);
       setHeaders(currentRequest.headers || []);
       setBody(currentRequest.body?.content || "");
-      setBodyType((currentRequest.body?.mode as "none" | "json" | "raw") || "none");
+      setBodyType((currentRequest.body?.mode as BodyType) || "none");
       setAuth(currentRequest.auth || { type: "none" });
       setRequestName(currentRequest.name || "");
       return;
@@ -452,28 +453,34 @@ export function RequestBuilder() {
 
             {/* Body Tab */}
             {activeRequestTab === "body" && (
-              <div className="text-sm">
+              <div className="text-sm flex flex-col h-full min-h-0">
                 <RadioGroup
                   value={bodyType}
-                  onChange={(value) => setBodyType(value as "none" | "json" | "raw")}
+                  onChange={(value) => setBodyType(value as BodyType)}
                   options={[
                     { value: "none", label: "None" },
                     { value: "json", label: "JSON" },
+                    { value: "xml", label: "XML" },
                     { value: "raw", label: "Raw" },
                   ]}
                   className="mb-3"
                 />
                 {bodyType !== "none" && (
-                  <textarea
-                    value={body}
-                    onChange={(e) => setBody(e.target.value)}
-                    placeholder={
-                      bodyType === "json"
-                        ? '{\n  "key": "value"\n}'
-                        : "Request body"
-                    }
-                    className="w-full h-64 p-3 bg-elevated-bg rounded-radius font-mono text-xs resize-none focus:outline-none"
-                  />
+                  <div className="flex-1 min-h-[300px]">
+                    <MonacoEditor
+                      value={body}
+                      onChange={setBody}
+                      language={bodyType === "json" ? "json" : bodyType === "xml" ? "xml" : "plaintext"}
+                      placeholder={
+                        bodyType === "json"
+                          ? '{\n  "key": "value"\n}'
+                          : bodyType === "xml"
+                            ? "<?xml version=\"1.0\"?>\n<root>\n  <item>value</item>\n</root>"
+                            : "Request body"
+                      }
+                      height="300px"
+                    />
+                  </div>
                 )}
               </div>
             )}
@@ -627,9 +634,21 @@ export function RequestBuilder() {
             ) : response ? (
               <>
                 {activeResponseTab === "body" && (
-                  <pre className="whitespace-pre-wrap break-words font-mono text-xs bg-elevated-bg p-4 rounded-radius overflow-auto flex-1">
-                    {formatJson(response.body)}
-                  </pre>
+                  <div className="h-[400px]">
+                    <MonacoEditor
+                      value={formatJson(response.body)}
+                      onChange={() => {}} // Read-only
+                      language={
+                        response.body.trim().startsWith("<")
+                          ? "xml"
+                          : response.body.trim().startsWith("{") || response.body.trim().startsWith("[")
+                            ? "json"
+                            : "plaintext"
+                      }
+                      height="400px"
+                      readOnly
+                    />
+                  </div>
                 )}
                 {activeResponseTab === "headers" && (
                   <div className="text-sm">
