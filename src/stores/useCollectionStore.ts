@@ -11,6 +11,24 @@ import {
 } from "../services/storageService";
 import { useWorkspaceStore } from "./useWorkspaceStore";
 
+/** Matches sidebar `isRequestItem`: draggable request rows only (excludes nested collection folders). */
+function isRequestEntry(item: CollectionItem): boolean {
+  return "method" in item && ("type" in item ? item.type === "request" : true);
+}
+
+function findOwningCollectionForRequest(
+  collections: Collection[],
+  requestId: string
+): { collection: Collection; item: CollectionItem } | null {
+  for (const c of collections) {
+    const item = c.items.find((i) => ("id" in i ? i.id : "") === requestId);
+    if (item && isRequestEntry(item)) {
+      return { collection: c, item };
+    }
+  }
+  return null;
+}
+
 interface CollectionState {
   collections: Collection[];
   activeCollection: Collection | null;
@@ -28,6 +46,12 @@ interface CollectionState {
   setSelectedRequest: (request: HttpRequest | null) => void;
   addRequestToCollection: (collectionId: string, request: HttpRequest) => Promise<void>;
   deleteRequestFromCollection: (collectionId: string, requestId: string) => Promise<void>;
+  moveRequest: (
+    sourceCollectionId: string,
+    requestId: string,
+    targetCollectionId: string,
+    targetIndex?: number
+  ) => Promise<void>;
 }
 
 export const useCollectionStore = create<CollectionState>((set, get) => ({
@@ -129,6 +153,55 @@ export const useCollectionStore = create<CollectionState>((set, get) => ({
       return itemId !== requestId;
     });
     await get().updateCollection(collectionId, { items: updatedItems });
+  },
+
+  moveRequest: async (
+    _declaredSourceCollectionId: string,
+    requestId: string,
+    targetCollectionId: string,
+    targetIndex?: number
+  ) => {
+    const collections = get().collections;
+    const targetCollection = collections.find((c) => c.id === targetCollectionId);
+    if (!targetCollection) {
+      throw new Error("Target collection not found");
+    }
+
+    const owned = findOwningCollectionForRequest(collections, requestId);
+    if (!owned) {
+      throw new Error("Request not found in any collection");
+    }
+
+    const resolvedSourceId = owned.collection.id;
+    const requestToMove = owned.item;
+
+    if (resolvedSourceId === targetCollectionId) {
+      const without = owned.collection.items.filter((item) => {
+        const itemId = "id" in item ? item.id : "";
+        return itemId !== requestId;
+      });
+      let insertAt = targetIndex ?? without.length;
+      insertAt = Math.max(0, Math.min(insertAt, without.length));
+      const reordered = [...without];
+      reordered.splice(insertAt, 0, requestToMove);
+      await get().updateCollection(resolvedSourceId, { items: reordered });
+      return;
+    }
+
+    // Remove from source collection (actual owner, not necessarily the drag payload collection)
+    const sourceItems = owned.collection.items.filter((item) => {
+      const itemId = 'id' in item ? item.id : '';
+      return itemId !== requestId;
+    });
+
+    // Add to target collection at specified index
+    const targetItems = [...targetCollection.items];
+    const insertIndex = targetIndex ?? targetItems.length;
+    targetItems.splice(insertIndex, 0, requestToMove);
+
+    // Update both collections
+    await get().updateCollection(resolvedSourceId, { items: sourceItems });
+    await get().updateCollection(targetCollectionId, { items: targetItems });
   },
 }));
 
