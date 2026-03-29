@@ -73,6 +73,7 @@ export function RequestBuilder() {
   >("body");
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [copiedResponse, setCopiedResponse] = useState(false);
+  const [requestName, setRequestName] = useState(currentRequest?.name || "");
 
   // Format response size to human readable
   const formatResponseSize = (bytes: number): string => {
@@ -100,6 +101,7 @@ export function RequestBuilder() {
       setBody(currentRequest.body?.content || "");
       setBodyType((currentRequest.body?.mode as "none" | "json" | "raw") || "none");
       setAuth(currentRequest.auth || { type: "none" });
+      setRequestName(currentRequest.name || "");
       return;
     }
 
@@ -110,6 +112,7 @@ export function RequestBuilder() {
     setBody("");
     setBodyType("none");
     setAuth({ type: "none" });
+    setRequestName("");
   }, [currentRequest]);
 
   // Build URL with query params
@@ -148,8 +151,8 @@ export function RequestBuilder() {
     const finalUrl = buildUrlWithParams();
 
     const request: HttpRequest = {
-      id: crypto.randomUUID(),
-      name: currentRequest?.name || "",
+      id: currentRequest?.id || crypto.randomUUID(),
+      name: requestName || currentRequest?.name || "",
       method,
       url: finalUrl,
       params,
@@ -159,7 +162,7 @@ export function RequestBuilder() {
           ? { mode: bodyType, content: body }
           : undefined,
       auth,
-      createdAt: new Date().toISOString(),
+      createdAt: currentRequest?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
 
@@ -188,6 +191,10 @@ export function RequestBuilder() {
     setError,
     setResponse,
     addToHistory,
+    requestName,
+    currentRequest?.id,
+    currentRequest?.name,
+    currentRequest?.createdAt,
   ]);
 
   // Keyboard shortcuts
@@ -244,6 +251,19 @@ export function RequestBuilder() {
 
   return (
     <div className="h-full flex flex-col overflow-hidden p-6">
+      {/* Request Name Header */}
+      {requestName && (
+        <div className="flex items-center gap-2 mb-3">
+          <input
+            type="text"
+            value={requestName}
+            onChange={(e) => setRequestName(e.target.value)}
+            placeholder="Request name"
+            className="flex-1 px-3 py-2 bg-card-bg rounded-radius text-text-primary text-sm font-medium focus:outline-none focus:ring-2 focus:ring-accent-orange"
+          />
+        </div>
+      )}
+
       {/* URL Bar */}
       <div className="flex items-center gap-2 mb-4">
         <MethodSelect
@@ -664,15 +684,15 @@ export function RequestBuilder() {
         isOpen={showSaveModal}
         onClose={() => setShowSaveModal(false)}
         request={{
-          id: crypto.randomUUID(),
-          name: currentRequest?.name || "",
+          id: currentRequest?.id || crypto.randomUUID(),
+          name: requestName,
           method,
           url: buildUrlWithParams(),
           params,
           headers: headers.filter((h) => h.enabled && h.key),
           body: bodyType !== "none" && body ? { mode: bodyType, content: body } : undefined,
           auth,
-          createdAt: new Date().toISOString(),
+          createdAt: currentRequest?.createdAt || new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         }}
       />
