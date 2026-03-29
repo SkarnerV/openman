@@ -44,7 +44,7 @@ export function Select({ value, onChange, options, placeholder, className = "" }
       </button>
 
       {isOpen && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-card-bg border border-elevated-bg rounded-radius shadow-lg z-50 overflow-hidden">
+        <div className="absolute top-full left-0 right-0 mt-1 bg-card-bg border border-elevated-bg rounded-radius shadow-lg z-50 overflow-hidden py-1">
           {options.map((option) => (
             <button
               key={option.value}
@@ -52,11 +52,13 @@ export function Select({ value, onChange, options, placeholder, className = "" }
                 onChange(option.value);
                 setIsOpen(false);
               }}
-              className="w-full flex items-center justify-between px-4 py-2.5 text-sm hover:bg-elevated-bg transition-colors"
+              className={`w-full flex items-center justify-between px-4 py-2 text-sm transition-colors ${
+                value === option.value
+                  ? "bg-accent-orange/10 text-text-primary"
+                  : "text-text-secondary hover:bg-elevated-bg hover:text-text-primary"
+              }`}
             >
-              <span className={value === option.value ? "text-text-primary" : "text-text-secondary"}>
-                {option.label}
-              </span>
+              <span>{option.label}</span>
               {value === option.value && (
                 <Check className="w-4 h-4 text-accent-orange" />
               )}

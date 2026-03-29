@@ -50,7 +50,7 @@ export function MethodSelect({ value, onChange }: MethodSelectProps) {
       </button>
 
       {isOpen && (
-        <div className="absolute top-full left-0 mt-1 bg-card-bg border border-elevated-bg rounded-radius shadow-lg z-50 overflow-hidden min-w-[120px]">
+        <div className="absolute top-full left-0 mt-1 bg-card-bg border border-elevated-bg rounded-radius shadow-lg z-50 overflow-hidden min-w-[140px] py-1">
           {methods.map((method) => (
             <button
               key={method}
@@ -58,9 +58,13 @@ export function MethodSelect({ value, onChange }: MethodSelectProps) {
                 onChange(method);
                 setIsOpen(false);
               }}
-              className="w-full flex items-center justify-between px-4 py-2 text-sm hover:bg-elevated-bg transition-colors"
+              className={`w-full flex items-center justify-between px-3 py-2 text-sm transition-colors ${
+                value === method
+                  ? "bg-accent-orange/10"
+                  : "hover:bg-elevated-bg"
+              }`}
             >
-              <span className={`font-mono font-semibold ${getMethodColor(method).split(" ")[0]}`}>
+              <span className={`px-2 py-0.5 rounded text-xs font-mono font-semibold ${getMethodColor(method)}`}>
                 {method}
               </span>
               {value === method && (
