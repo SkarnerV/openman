@@ -19,6 +19,8 @@ pub struct HttpRequest {
     pub pre_request_script: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub test_script: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub last_response: Option<HttpResponse>,
     pub created_at: String,
     pub updated_at: String,
 }

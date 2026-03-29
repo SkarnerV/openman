@@ -174,6 +174,7 @@ fn convert_postman_item(item: &PostmanItem) -> CollectionItem {
             auth: None,
             pre_request_script: None,
             test_script: None,
+            last_response: None,
             created_at: now.clone(),
             updated_at: now,
         }))
@@ -239,6 +240,7 @@ fn convert_postman_request(name: &str, request: &PostmanRequest) -> HttpRequest 
         auth,
         pre_request_script: None,
         test_script: None,
+        last_response: None,
         created_at: now.clone(),
         updated_at: now,
     }

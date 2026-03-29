@@ -5,6 +5,7 @@ import type {
   HttpMethod,
   QueryParam,
   RequestBody as StoredRequestBody,
+  HttpResponse as StoredHttpResponse,
 } from "../stores/useRequestStore";
 
 // Types
@@ -65,6 +66,7 @@ export interface HttpRequest {
   auth?: StoredAuthConfig;
   preRequestScript?: string;
   testScript?: string;
+  lastResponse?: StoredHttpResponse;
   createdAt: string;
   updatedAt: string;
 }

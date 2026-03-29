@@ -11,6 +11,8 @@ import { useWorkspaceStore } from "./stores/useWorkspaceStore";
 import { useCollectionStore } from "./stores/useCollectionStore";
 import { useEnvironmentStore } from "./stores/useEnvironmentStore";
 import { useThemeStore } from "./stores/useThemeStore";
+import { useSettingsStore } from "./stores/useSettingsStore";
+import { useRequestStore } from "./stores/useRequestStore";
 import { Loader2, AlertCircle } from "lucide-react";
 
 function AppContent() {
@@ -19,6 +21,8 @@ function AppContent() {
   const { loadCollections } = useCollectionStore();
   const { loadEnvironments } = useEnvironmentStore();
   const { applyTheme } = useThemeStore();
+  const { toggleSidebar } = useSettingsStore();
+  const { setCurrentRequest, setResponse, setError, clearSourceContext } = useRequestStore();
   const navigate = useNavigate();
 
   // Initialize workspace and load data on startup
@@ -30,6 +34,49 @@ function AppContent() {
   useEffect(() => {
     applyTheme();
   }, [applyTheme]);
+
+  // Global keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const key = e.key.toLowerCase();
+      const ctrlOrCmd = e.ctrlKey || e.metaKey;
+
+      // Ctrl/Cmd + N: New request
+      if (ctrlOrCmd && key === "n") {
+        e.preventDefault();
+        setCurrentRequest(null);
+        setResponse(null);
+        setError(null);
+        clearSourceContext();
+        navigate("/request");
+      }
+      // Ctrl/Cmd + B: Toggle sidebar
+      else if (ctrlOrCmd && key === "b") {
+        e.preventDefault();
+        toggleSidebar();
+      }
+      // Ctrl/Cmd + 1-4: Navigate to tabs
+      else if (ctrlOrCmd && key === "1") {
+        e.preventDefault();
+        navigate("/collections");
+      }
+      else if (ctrlOrCmd && key === "2") {
+        e.preventDefault();
+        navigate("/request");
+      }
+      else if (ctrlOrCmd && key === "3") {
+        e.preventDefault();
+        navigate("/history");
+      }
+      else if (ctrlOrCmd && key === "4") {
+        e.preventDefault();
+        navigate("/environments");
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [navigate, toggleSidebar, setCurrentRequest, setResponse, setError, clearSourceContext]);
 
   // Load collections and environments when workspace is ready
   useEffect(() => {

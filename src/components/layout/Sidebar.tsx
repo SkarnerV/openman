@@ -8,6 +8,8 @@ import {
   ChevronRight,
   Globe,
   GripVertical,
+  Copy,
+  Loader2,
 } from "lucide-react";
 import { useCollectionStore, type Collection } from "../../stores/useCollectionStore";
 import { useRequestStore, type HttpRequest } from "../../stores/useRequestStore";
@@ -29,8 +31,8 @@ export function Sidebar() {
   } | null>(null);
   const { sidebarVisible } = useSettingsStore();
 
-  const { collections, createCollection, deleteCollection, deleteRequestFromCollection, moveRequest } = useCollectionStore();
-  const { setCurrentRequest, setResponse, setError } = useRequestStore();
+  const { collections, createCollection, deleteCollection, deleteRequestFromCollection, moveRequest, duplicateRequest, isLoading } = useCollectionStore();
+  const { setCurrentRequest, setResponse, setError, setSourceContext, clearSourceContext } = useRequestStore();
 
   // Drag and drop refs (using refs instead of state to avoid re-renders during drag)
   const draggedRequestRef = useRef<{
@@ -47,9 +49,25 @@ export function Sidebar() {
     }));
   };
 
-  const handleSelectRequest = (request: HttpRequest) => {
+  const handleSelectRequest = (request: HttpRequest, collectionId: string) => {
     setCurrentRequest(request);
+    setSourceContext(collectionId, request.id);
+    // Restore last response if available
+    if (request.lastResponse) {
+      setResponse(request.lastResponse);
+    } else {
+      setResponse(null);
+    }
+    setError(null);
     navigate("/request");
+  };
+
+  const handleDuplicateRequest = async (collectionId: string, requestId: string) => {
+    try {
+      await duplicateRequest(collectionId, requestId);
+    } catch (err) {
+      console.error("Failed to duplicate request:", err);
+    }
   };
 
   const getMethodColor = (method: string) => {
@@ -252,6 +270,7 @@ export function Sidebar() {
             setCurrentRequest(null);
             setResponse(null);
             setError(null);
+            clearSourceContext();
             navigate("/request");
           }}
           className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-accent-orange text-text-on-accent rounded-lg font-semibold hover:opacity-90 transition-opacity"
@@ -279,7 +298,11 @@ export function Sidebar() {
 
       {/* Collections List */}
       <div className="flex-1 overflow-auto px-3">
-        {filteredCollections.length === 0 ? (
+        {isLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="w-5 h-5 animate-spin text-text-secondary" />
+          </div>
+        ) : filteredCollections.length === 0 ? (
           <div className="text-sm text-text-secondary py-2">
             {searchQuery ? "No collections found" : "No collections yet"}
           </div>
@@ -303,6 +326,7 @@ export function Sidebar() {
                   requestId,
                   name: requestName,
                 })}
+                onDuplicateRequest={(requestId) => handleDuplicateRequest(collection.id, requestId)}
                 getMethodColor={getMethodColor}
                 formatUrl={formatUrl}
                 isRequestItem={isRequestItem}
@@ -329,8 +353,9 @@ interface CollectionItemProps {
   isExpanded: boolean;
   onToggle: () => void;
   onDelete: () => void;
-  onSelectRequest: (request: HttpRequest) => void;
+  onSelectRequest: (request: HttpRequest, collectionId: string) => void;
   onDeleteRequest: (requestId: string, requestName: string) => void;
+  onDuplicateRequest: (requestId: string) => void;
   getMethodColor: (method: string) => string;
   formatUrl: (url: string) => string;
   isRequestItem: (item: CollectionItem) => item is HttpRequest | RequestCollectionItem;
@@ -352,6 +377,7 @@ function CollectionItem({
   onDelete,
   onSelectRequest,
   onDeleteRequest,
+  onDuplicateRequest,
   getMethodColor,
   formatUrl,
   isRequestItem,
@@ -437,17 +463,32 @@ function CollectionItem({
                     {item.method}
                   </span>
                   <span
-                    className="text-xs truncate flex-1 text-text-secondary"
-                    onClick={() => onSelectRequest(item)}
+                    className="text-xs truncate flex-1 cursor-pointer"
+                    onClick={() => onSelectRequest(item, collection.id)}
                   >
-                    {item.name || formatUrl(item.url)}
+                    {item.name ? (
+                      <span className="text-text-primary">{item.name}</span>
+                    ) : (
+                      <span className="text-text-secondary italic">{formatUrl(item.url)}</span>
+                    )}
                   </span>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDuplicateRequest(item.id);
+                    }}
+                    className="p-1 opacity-0 group-hover/request:opacity-100 hover:bg-card-bg rounded transition-opacity"
+                    title="Duplicate"
+                  >
+                    <Copy className="w-3 h-3 text-text-secondary hover:text-accent-teal" />
+                  </button>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       onDeleteRequest(item.id, item.name || formatUrl(item.url));
                     }}
                     className="p-1 opacity-0 group-hover/request:opacity-100 hover:bg-card-bg rounded transition-opacity"
+                    title="Delete"
                   >
                     <span className="text-text-secondary hover:text-delete-method">×</span>
                   </button>

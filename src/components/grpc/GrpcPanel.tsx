@@ -10,15 +10,15 @@ export function GrpcPanel() {
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden">
       {/* Server Connection Bar */}
-      <div className="flex items-center gap-2 p-3 border-b border-border bg-card">
+      <div className="flex items-center gap-2 p-3 border-b border-elevated-bg bg-card-bg">
         <input
           type="text"
           value={serverAddress}
           onChange={(e) => setServerAddress(e.target.value)}
           placeholder="Server address (e.g., localhost:50051)"
-          className="flex-1 px-3 py-1.5 rounded border border-border bg-background text-sm"
+          className="flex-1 px-3 py-1.5 rounded-radius border border-elevated-bg bg-elevated-bg text-sm"
         />
-        <button className="flex items-center gap-1 px-4 py-1.5 bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors">
+        <button className="flex items-center gap-1 px-4 py-1.5 bg-accent-orange text-text-on-accent rounded-radius hover:opacity-90 transition-opacity">
           <RefreshCw className="w-4 h-4" />
           Connect
         </button>
@@ -27,17 +27,17 @@ export function GrpcPanel() {
       {/* Main Content Area */}
       <div className="flex-1 flex overflow-hidden">
         {/* Proto Files Panel */}
-        <div className="w-64 border-r border-border flex flex-col">
-          <div className="p-3 border-b border-border flex items-center justify-between">
+        <div className="w-64 border-r border-elevated-bg flex flex-col">
+          <div className="p-3 border-b border-elevated-bg flex items-center justify-between">
             <span className="text-sm font-medium">Proto Files</span>
             <button
-              className="p-1 rounded hover:bg-muted/50"
+              className="p-1 rounded-radius hover:bg-elevated-bg"
               title="Import Proto"
             >
-              <Upload className="w-4 h-4 text-muted-foreground" />
+              <Upload className="w-4 h-4 text-text-secondary" />
             </button>
           </div>
-          <div className="flex-1 p-3 overflow-auto text-sm text-muted-foreground">
+          <div className="flex-1 p-3 overflow-auto text-sm text-text-secondary">
             <p>Import .proto files to see services</p>
           </div>
         </div>
@@ -45,15 +45,15 @@ export function GrpcPanel() {
         {/* Main Panel */}
         <div className="flex-1 flex flex-col">
           {/* Tabs */}
-          <div className="flex border-b border-border">
+          <div className="flex border-b border-elevated-bg">
             {(["services", "request", "response"] as const).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 className={`px-4 py-2 text-sm capitalize transition-colors ${
                   activeTab === tab
-                    ? "text-primary border-b-2 border-primary bg-primary/5"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                    ? "text-accent-orange border-b-2 border-accent-orange bg-accent-orange/5"
+                    : "text-text-secondary hover:text-text-primary hover:bg-elevated-bg"
                 }`}
               >
                 {tab}
@@ -64,7 +64,7 @@ export function GrpcPanel() {
           {/* Content */}
           <div className="flex-1 p-4 overflow-auto">
             {activeTab === "services" && (
-              <div className="text-sm text-muted-foreground">
+              <div className="text-sm text-text-secondary">
                 <p>
                   Services will be listed here after connecting to a server or
                   loading proto files.
@@ -72,10 +72,10 @@ export function GrpcPanel() {
               </div>
             )}
             {activeTab === "request" && (
-              <div className="text-sm text-muted-foreground">
+              <div className="text-sm text-text-secondary">
                 <div className="mb-4">
                   <label className="block mb-1">Method</label>
-                  <select className="w-full px-2 py-1 border border-border rounded bg-background">
+                  <select className="w-full px-2 py-1 border border-elevated-bg rounded-radius bg-elevated-bg">
                     <option value="">Select a method</option>
                   </select>
                 </div>
@@ -83,17 +83,17 @@ export function GrpcPanel() {
                   <label className="block mb-1">Message (JSON)</label>
                   <textarea
                     placeholder="{}"
-                    className="w-full h-48 p-2 border border-border rounded bg-background font-mono text-xs"
+                    className="w-full h-48 p-2 border border-elevated-bg rounded-radius bg-elevated-bg font-mono text-xs"
                   />
                 </div>
-                <button className="flex items-center gap-1 px-4 py-1.5 bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors">
+                <button className="flex items-center gap-1 px-4 py-1.5 bg-accent-orange text-text-on-accent rounded-radius hover:opacity-90 transition-opacity">
                   <Send className="w-4 h-4" />
                   Invoke
                 </button>
               </div>
             )}
             {activeTab === "response" && (
-              <div className="text-sm text-muted-foreground">
+              <div className="text-sm text-text-secondary">
                 <p>Response will appear here after invoking a method.</p>
               </div>
             )}

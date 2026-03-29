@@ -19,6 +19,7 @@ export interface HttpRequest {
   auth?: AuthConfig;
   preRequestScript?: string;
   testScript?: string;
+  lastResponse?: HttpResponse;
   createdAt: string;
   updatedAt: string;
 }
@@ -72,6 +73,9 @@ interface RequestState {
   isLoading: boolean;
   error: string | null;
   requestHistory: HttpRequest[];
+  // Track the source of the current request (for update vs save new)
+  sourceCollectionId: string | null;
+  sourceRequestId: string | null;
   setCurrentRequest: (request: Partial<HttpRequest> | null) => void;
   updateCurrentRequest: (updates: Partial<HttpRequest>) => void;
   setResponse: (response: HttpResponse | null) => void;
@@ -79,6 +83,8 @@ interface RequestState {
   setError: (error: string | null) => void;
   addToHistory: (request: HttpRequest) => void;
   clearHistory: () => void;
+  setSourceContext: (collectionId: string | null, requestId: string | null) => void;
+  clearSourceContext: () => void;
 }
 
 export const useRequestStore = create<RequestState>((set) => ({
@@ -87,6 +93,8 @@ export const useRequestStore = create<RequestState>((set) => ({
   isLoading: false,
   error: null,
   requestHistory: [],
+  sourceCollectionId: null,
+  sourceRequestId: null,
   setCurrentRequest: (request) => set({ currentRequest: request }),
   updateCurrentRequest: (updates) =>
     set((state) => ({
@@ -102,4 +110,7 @@ export const useRequestStore = create<RequestState>((set) => ({
       requestHistory: [request, ...state.requestHistory].slice(0, 100), // Keep last 100
     })),
   clearHistory: () => set({ requestHistory: [] }),
+  setSourceContext: (collectionId, requestId) =>
+    set({ sourceCollectionId: collectionId, sourceRequestId: requestId }),
+  clearSourceContext: () => set({ sourceCollectionId: null, sourceRequestId: null }),
 }));

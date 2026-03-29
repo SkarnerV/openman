@@ -45,7 +45,9 @@ interface CollectionState {
   setActiveCollection: (collection: Collection | null) => void;
   setSelectedRequest: (request: HttpRequest | null) => void;
   addRequestToCollection: (collectionId: string, request: HttpRequest) => Promise<void>;
+  updateRequestInCollection: (collectionId: string, request: HttpRequest) => Promise<void>;
   deleteRequestFromCollection: (collectionId: string, requestId: string) => Promise<void>;
+  duplicateRequest: (collectionId: string, requestId: string) => Promise<void>;
   moveRequest: (
     sourceCollectionId: string,
     requestId: string,
@@ -143,6 +145,20 @@ export const useCollectionStore = create<CollectionState>((set, get) => ({
     await get().updateCollection(collectionId, { items: updatedItems });
   },
 
+  updateRequestInCollection: async (collectionId: string, request: HttpRequest) => {
+    const collection = get().collections.find((c) => c.id === collectionId);
+    if (!collection) throw new Error("Collection not found");
+
+    const updatedItems = collection.items.map((item) => {
+      const itemId = 'id' in item ? item.id : '';
+      if (itemId === request.id) {
+        return toRequestCollectionItem(request);
+      }
+      return item;
+    });
+    await get().updateCollection(collectionId, { items: updatedItems });
+  },
+
   deleteRequestFromCollection: async (collectionId: string, requestId: string) => {
     const collection = get().collections.find((c) => c.id === collectionId);
     if (!collection) throw new Error("Collection not found");
@@ -152,6 +168,35 @@ export const useCollectionStore = create<CollectionState>((set, get) => ({
       const itemId = 'id' in item ? item.id : '';
       return itemId !== requestId;
     });
+    await get().updateCollection(collectionId, { items: updatedItems });
+  },
+
+  duplicateRequest: async (collectionId: string, requestId: string) => {
+    const collection = get().collections.find((c) => c.id === collectionId);
+    if (!collection) throw new Error("Collection not found");
+
+    const requestItem = collection.items.find((item) => {
+      const itemId = 'id' in item ? item.id : '';
+      return itemId === requestId && 'method' in item;
+    }) as HttpRequest | undefined;
+
+    if (!requestItem) {
+      throw new Error("Request not found");
+    }
+
+    // Create a copy with new ID and "(Copy)" suffix
+    const duplicatedRequest: HttpRequest = {
+      ...requestItem,
+      id: crypto.randomUUID(),
+      name: requestItem.name ? `${requestItem.name} (Copy)` : "(Copy)",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    const updatedItems: CollectionItem[] = [
+      ...collection.items,
+      toRequestCollectionItem(duplicatedRequest),
+    ];
     await get().updateCollection(collectionId, { items: updatedItems });
   },
 

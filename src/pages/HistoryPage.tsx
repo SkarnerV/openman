@@ -4,7 +4,7 @@ import { useRequestStore, type HttpRequest } from "../stores/useRequestStore";
 import { useNavigate } from "react-router-dom";
 
 export function HistoryPage() {
-  const { requestHistory, clearHistory } = useRequestStore();
+  const { requestHistory, clearHistory, setCurrentRequest, setResponse, setError } = useRequestStore();
   const [searchQuery, setSearchQuery] = useState("");
   const [methodFilter, setMethodFilter] = useState<string>("all");
   const navigate = useNavigate();
@@ -57,8 +57,11 @@ export function HistoryPage() {
     }
   };
 
-  const handleRequestClick = (_request: HttpRequest) => {
-    // Navigate to request builder with this request
+  const handleRequestClick = (request: HttpRequest) => {
+    // Load the request into the store and navigate to request builder
+    setCurrentRequest(request);
+    setResponse(null);
+    setError(null);
     navigate("/request");
   };
 

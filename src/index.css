@@ -171,3 +171,39 @@
 .bg-post { background-color: var(--post-method); }
 .bg-put { background-color: var(--put-method); }
 .bg-delete { background-color: var(--delete-method); }
+
+/* Smooth transitions */
+.transition-smooth {
+  transition: all 0.2s ease-in-out;
+}
+
+/* Sidebar item hover effect */
+.sidebar-item-hover {
+  transition: background-color 0.15s ease-in-out;
+}
+
+.sidebar-item-hover:hover {
+  background-color: var(--elevated-bg);
+}
+
+/* Collection expand/collapse animation */
+.collection-content {
+  transition: max-height 0.2s ease-out, opacity 0.2s ease-out;
+  overflow: hidden;
+}
+
+/* Loading shimmer effect */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.loading-shimmer {
+  background: linear-gradient(90deg, var(--elevated-bg) 25%, var(--placeholder-bg) 50%, var(--elevated-bg) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}

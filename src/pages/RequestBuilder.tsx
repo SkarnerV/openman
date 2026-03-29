@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { Send, Save, Copy, Loader2 } from "lucide-react";
+import { Send, Save, Copy, Loader2, Check } from "lucide-react";
 import { useRequestStore } from "../stores/useRequestStore";
 import { sendHttpRequest } from "../services/httpService";
 import { SaveRequestModal } from "../components/common/SaveRequestModal";
@@ -8,6 +8,30 @@ import { Checkbox } from "../components/common/Checkbox";
 import { RadioGroup } from "../components/common/RadioGroup";
 import { Select } from "../components/common/Select";
 import type { HttpRequest, HttpMethod, Header, QueryParam, AuthConfig } from "../stores/useRequestStore";
+
+// Keyboard shortcuts helper
+function useKeyboardShortcuts(handlers: Record<string, () => void>) {
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const key = e.key.toLowerCase();
+      const ctrlOrCmd = e.ctrlKey || e.metaKey;
+
+      // Ctrl/Cmd + Enter: Send request
+      if (ctrlOrCmd && key === "enter") {
+        e.preventDefault();
+        handlers.sendRequest?.();
+      }
+      // Ctrl/Cmd + S: Save request
+      else if (ctrlOrCmd && key === "s") {
+        e.preventDefault();
+        handlers.saveRequest?.();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handlers]);
+}
 
 export function RequestBuilder() {
   const {
@@ -48,6 +72,23 @@ export function RequestBuilder() {
     "body" | "headers" | "cookies"
   >("body");
   const [showSaveModal, setShowSaveModal] = useState(false);
+  const [copiedResponse, setCopiedResponse] = useState(false);
+
+  // Format response size to human readable
+  const formatResponseSize = (bytes: number): string => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(2)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+  };
+
+  // Copy response with feedback
+  const handleCopyResponse = () => {
+    if (response) {
+      navigator.clipboard.writeText(formatJson(response.body));
+      setCopiedResponse(true);
+      setTimeout(() => setCopiedResponse(false), 2000);
+    }
+  };
 
   // Sync local state when currentRequest changes (e.g., when loading a saved request)
   useEffect(() => {
@@ -84,12 +125,16 @@ export function RequestBuilder() {
         .forEach((p) => {
           urlObj.searchParams.append(p.key, p.value);
         });
+      // Add API Key auth as query param if configured
+      if (auth.type === "api-key" && auth.addTo === "query" && auth.key && auth.value) {
+        urlObj.searchParams.append(auth.key, auth.value);
+      }
       return urlObj.toString();
     } catch {
       // If URL is invalid, just return as-is
       return url;
     }
-  }, [url, params]);
+  }, [url, params, auth]);
 
   const handleSendRequest = useCallback(async () => {
     if (!url) {
@@ -144,6 +189,12 @@ export function RequestBuilder() {
     setResponse,
     addToHistory,
   ]);
+
+  // Keyboard shortcuts
+  useKeyboardShortcuts({
+    sendRequest: handleSendRequest,
+    saveRequest: () => setShowSaveModal(true),
+  });
 
   // Params handlers
   const addParam = () => {
@@ -531,11 +582,18 @@ export function RequestBuilder() {
             </div>
             {response && (
               <button
-                onClick={() => navigator.clipboard.writeText(response.body)}
-                className="p-2 rounded-radius hover:bg-elevated-bg"
+                onClick={handleCopyResponse}
+                className="flex items-center gap-1 px-2 py-1 rounded-radius hover:bg-elevated-bg transition-colors"
                 title="Copy Response"
               >
-                <Copy className="w-4 h-4 text-text-secondary" />
+                {copiedResponse ? (
+                  <>
+                    <Check className="w-4 h-4 text-success" />
+                    <span className="text-xs text-success">Copied!</span>
+                  </>
+                ) : (
+                  <Copy className="w-4 h-4 text-text-secondary" />
+                )}
               </button>
             )}
           </div>
@@ -549,7 +607,7 @@ export function RequestBuilder() {
             ) : response ? (
               <>
                 {activeResponseTab === "body" && (
-                  <pre className="whitespace-pre-wrap break-words font-mono text-xs bg-elevated-bg p-4 rounded-radius overflow-auto max-h-96">
+                  <pre className="whitespace-pre-wrap break-words font-mono text-xs bg-elevated-bg p-4 rounded-radius overflow-auto flex-1">
                     {formatJson(response.body)}
                   </pre>
                 )}
@@ -595,7 +653,7 @@ export function RequestBuilder() {
                 Status: {response.status} {response.statusText}
               </span>
               <span>Time: {response.responseTime} ms</span>
-              <span>Size: {response.responseSize} B</span>
+              <span>Size: {formatResponseSize(response.responseSize)}</span>
             </div>
           )}
         </div>

@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
-import { X, Save } from "lucide-react";
+import { X, Save, RefreshCw } from "lucide-react";
 import { useCollectionStore } from "../../stores/useCollectionStore";
+import { useRequestStore } from "../../stores/useRequestStore";
 import { Select } from "./Select";
-import type { HttpRequest } from "../../stores/useRequestStore";
+import type { HttpRequest, HttpResponse } from "../../stores/useRequestStore";
 
 interface SaveRequestModalProps {
   isOpen: boolean;
@@ -11,7 +12,8 @@ interface SaveRequestModalProps {
 }
 
 export function SaveRequestModal({ isOpen, onClose, request }: SaveRequestModalProps) {
-  const { collections, createCollection, addRequestToCollection } = useCollectionStore();
+  const { collections, createCollection, addRequestToCollection, updateRequestInCollection } = useCollectionStore();
+  const { sourceCollectionId, sourceRequestId, response, clearSourceContext } = useRequestStore();
   const [selectedCollectionId, setSelectedCollectionId] = useState<string>("");
   const [requestName, setRequestName] = useState(request.name || "");
   const [isNewCollection, setIsNewCollection] = useState(false);
@@ -19,11 +21,17 @@ export function SaveRequestModal({ isOpen, onClose, request }: SaveRequestModalP
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Determine if this is an update (same collection and request ID)
+  const isUpdate = sourceCollectionId && sourceRequestId === request.id;
+
   useEffect(() => {
-    if (collections.length > 0 && !selectedCollectionId) {
+    if (isUpdate && sourceCollectionId) {
+      // Pre-select the source collection for updates
+      setSelectedCollectionId(sourceCollectionId);
+    } else if (collections.length > 0 && !selectedCollectionId) {
       setSelectedCollectionId(collections[0].id);
     }
-  }, [collections, selectedCollectionId]);
+  }, [collections, selectedCollectionId, isUpdate, sourceCollectionId]);
 
   useEffect(() => {
     setRequestName(request.name || "");
@@ -58,15 +66,24 @@ export function SaveRequestModal({ isOpen, onClose, request }: SaveRequestModalP
         return;
       }
 
-      // Save request to collection
+      // Prepare request with response data (Task 1.3)
       const requestToSave: HttpRequest = {
         ...request,
-        id: crypto.randomUUID(),
+        id: isUpdate ? request.id : crypto.randomUUID(),
         name: requestName.trim(),
+        lastResponse: response as HttpResponse | undefined,
         updatedAt: new Date().toISOString(),
       };
 
-      await addRequestToCollection(collectionId, requestToSave);
+      if (isUpdate && sourceCollectionId === collectionId) {
+        // Update existing request
+        await updateRequestInCollection(collectionId, requestToSave);
+      } else {
+        // Save as new request
+        await addRequestToCollection(collectionId, requestToSave);
+        // Clear source context since we're saving as new
+        clearSourceContext();
+      }
       onClose();
     } catch (err) {
       console.error("Failed to save request:", err);
@@ -88,7 +105,9 @@ export function SaveRequestModal({ isOpen, onClose, request }: SaveRequestModalP
       <div className="bg-card-bg border border-elevated-bg rounded-radius p-6 w-[480px] max-w-[90vw] overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between mb-6 min-w-0">
-          <h2 className="text-lg font-semibold font-display truncate">Save Request</h2>
+          <h2 className="text-lg font-semibold font-display truncate">
+            {isUpdate ? "Update Request" : "Save Request"}
+          </h2>
           <button
             onClick={onClose}
             className="p-2 hover:bg-elevated-bg rounded-radius transition-colors shrink-0"
@@ -207,8 +226,10 @@ export function SaveRequestModal({ isOpen, onClose, request }: SaveRequestModalP
             disabled={isSaving}
             className="flex items-center gap-2 px-4 py-2 bg-accent-orange text-text-on-accent rounded-radius text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
           >
-            <Save className="w-4 h-4" />
-            {isSaving ? "Saving..." : "Save Request"}
+            {isUpdate ? <RefreshCw className="w-4 h-4" /> : <Save className="w-4 h-4" />}
+            {isSaving
+              ? isUpdate ? "Updating..." : "Saving..."
+              : isUpdate ? "Update Request" : "Save Request"}
           </button>
         </div>
       </div>

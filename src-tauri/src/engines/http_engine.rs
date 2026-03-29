@@ -65,6 +65,13 @@ pub async fn send_request(request: HttpRequest) -> Result<HttpResponse> {
             crate::models::request::AuthConfig::Basic { username, password } => {
                 request_builder = request_builder.basic_auth(username, Some(password));
             }
+            crate::models::request::AuthConfig::ApiKey { key, value, add_to } => {
+                // Add API key as header (query param handling is done in frontend)
+                if add_to == "header" {
+                    request_builder = request_builder.header(key, value);
+                }
+                // Note: For query param, the frontend should include it in the URL
+            }
             _ => {}
         }
     }
