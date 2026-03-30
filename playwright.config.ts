@@ -1,8 +1,8 @@
-import { defineConfig, devices } from '@playwright/test';
+import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
-  testDir: './e2e',
-  testMatch: '**/*.spec.ts',
+  testDir: "./e2e",
+  testMatch: "**/*.spec.ts",
   timeout: 30000,
   expect: {
     timeout: 5000,
@@ -12,33 +12,30 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
 
-  reporter: [
-    ['html', { outputFolder: 'playwright-report' }],
-    ['list'],
-  ],
+  reporter: [["html", { outputFolder: "playwright-report" }], ["list"]],
 
   webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:1420',
+    command: "npm run dev",
+    url: "http://localhost:1420",
     reuseExistingServer: true,
     timeout: 120000,
   },
 
   projects: [
     {
-      name: 'chromium',
+      name: "chromium",
       use: {
-        ...devices['Desktop Chrome'],
-        baseURL: 'http://localhost:1420',
+        ...devices["Desktop Chrome"],
+        baseURL: "http://localhost:1420",
       },
     },
   ],
 
   use: {
-    baseURL: 'http://localhost:1420',
-    trace: 'on-first-retry',
+    baseURL: "http://localhost:1420",
+    trace: "on-first-retry",
     screenshot: {
-      mode: 'only-on-failure',
+      mode: "only-on-failure",
       fullPage: true,
     },
   },

@@ -370,7 +370,11 @@ test.describe('Request Builder', () => {
     // RadioGroup renders options as buttons with text labels
     await mainContent(page).locator('button:has-text("JSON")').first().click();
 
-    await expect(page.locator('.monaco-editor, [data-testid="monaco-editor"]')).toBeVisible({ timeout: 10000 });
+    // Wait for loading state to disappear
+    await expect(page.locator('text=Loading editor')).toBeHidden({ timeout: 10000 });
+
+    // Monaco editor renders with .monaco-editor class or we can check for the editor container
+    await expect(page.locator('.monaco-editor')).toBeVisible({ timeout: 5000 });
   });
 
   test('configures Bearer Token auth', async ({ page }) => {
@@ -666,7 +670,10 @@ test.describe('Full Workflow', () => {
     // Switch to body tab and set JSON
     await mainContent(page).locator('button:has-text("body")').first().click();
     await mainContent(page).locator('button:has-text("JSON")').first().click();
-    await expect(page.locator('.monaco-editor, [data-testid="monaco-editor"]')).toBeVisible({ timeout: 10000 });
+
+    // Wait for loading state to disappear then check editor
+    await expect(page.locator('text=Loading editor')).toBeHidden({ timeout: 10000 });
+    await expect(page.locator('.monaco-editor')).toBeVisible({ timeout: 5000 });
 
     // Switch to headers and add one
     await mainContent(page).locator('button:has-text("headers")').first().click();
