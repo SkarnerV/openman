@@ -289,6 +289,93 @@ describe('RequestBuilder', () => {
     expect(screen.getByText(/Loading editor/i)).toBeInTheDocument();
   });
 
+  it('shows body editor when selecting XML body type', async () => {
+    const user = userEvent.setup();
+    useRequestStore.setState({
+      currentRequest: {
+        id: 'test',
+        name: 'Test',
+        method: 'GET',
+        url: 'https://api.example.com',
+        headers: [],
+        createdAt: '2024-01-01T00:00:00Z',
+        updatedAt: '2024-01-01T00:00:00Z',
+      },
+    });
+
+    renderWithRouter(<RequestBuilder />);
+
+    // Click the first body button (request tab)
+    const bodyTabs = screen.getAllByText('body');
+    await user.click(bodyTabs[0]);
+
+    // Click on XML option in RadioGroup
+    const xmlOption = screen.getByText('XML');
+    await user.click(xmlOption);
+
+    // Verify Monaco Editor loading state is shown
+    expect(screen.getByText(/Loading editor/i)).toBeInTheDocument();
+  });
+
+  it('shows all body type options', async () => {
+    const user = userEvent.setup();
+    useRequestStore.setState({
+      currentRequest: {
+        id: 'test',
+        name: 'Test',
+        method: 'GET',
+        url: 'https://api.example.com',
+        headers: [],
+        createdAt: '2024-01-01T00:00:00Z',
+        updatedAt: '2024-01-01T00:00:00Z',
+      },
+    });
+
+    renderWithRouter(<RequestBuilder />);
+
+    // Click the first body button (request tab)
+    const bodyTabs = screen.getAllByText('body');
+    await user.click(bodyTabs[0]);
+
+    // Verify all body type options are available
+    expect(screen.getByText('None')).toBeInTheDocument();
+    expect(screen.getByText('JSON')).toBeInTheDocument();
+    expect(screen.getByText('XML')).toBeInTheDocument();
+    expect(screen.getByText('Raw')).toBeInTheDocument();
+  });
+
+  it('hides body editor when selecting None body type', async () => {
+    const user = userEvent.setup();
+    useRequestStore.setState({
+      currentRequest: {
+        id: 'test',
+        name: 'Test',
+        method: 'GET',
+        url: 'https://api.example.com',
+        headers: [],
+        createdAt: '2024-01-01T00:00:00Z',
+        updatedAt: '2024-01-01T00:00:00Z',
+      },
+    });
+
+    renderWithRouter(<RequestBuilder />);
+
+    // Click the first body button (request tab)
+    const bodyTabs = screen.getAllByText('body');
+    await user.click(bodyTabs[0]);
+
+    // Select JSON first
+    const jsonOption = screen.getByText('JSON');
+    await user.click(jsonOption);
+
+    // Then select None
+    const noneOption = screen.getByText('None');
+    await user.click(noneOption);
+
+    // Editor should not be visible
+    expect(screen.queryByText(/Loading editor/i)).not.toBeInTheDocument();
+  });
+
   it('disables Send button when URL is empty', async () => {
     useRequestStore.setState({
       currentRequest: {
