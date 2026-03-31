@@ -11,7 +11,6 @@ import { test, expect } from '@playwright/test';
 import {
   loadApp,
   mainContent,
-  MOCK_ENVIRONMENTS,
 } from './fixtures/tauri-mock';
 
 test.describe('Environments Page', () => {

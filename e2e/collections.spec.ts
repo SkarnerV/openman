@@ -9,9 +9,7 @@
 import { test, expect } from '@playwright/test';
 import {
   loadApp,
-  sidebar,
   mainContent,
-  MOCK_COLLECTIONS,
 } from './fixtures/tauri-mock';
 
 test.describe('Collections Page', () => {

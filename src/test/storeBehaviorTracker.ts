@@ -5,7 +5,7 @@
  * Provides automatic tracking of state mutations without manual instrumentation.
  */
 
-import { behaviorTracker, EventCategory } from '../services/behaviorTracker';
+import { behaviorTracker } from '../services/behaviorTracker';
 import {
   useRequestStore,
   useCollectionStore,
@@ -23,48 +23,6 @@ export interface StoreChangeEvent {
   currentValue: unknown;
   timestamp: number;
 }
-
-// Store field mappings for better labeling
-const STORE_FIELD_LABELS: Record<StoreName, Record<string, string>> = {
-  request: {
-    currentRequest: 'Current Request',
-    response: 'Response',
-    isLoading: 'Loading State',
-    error: 'Error State',
-    activeTab: 'Active Tab',
-    requestHistory: 'Request History',
-  },
-  collection: {
-    collections: 'Collections',
-    activeCollection: 'Active Collection',
-    selectedRequest: 'Selected Request',
-    isLoading: 'Loading State',
-  },
-  environment: {
-    environments: 'Environments',
-    activeEnvironment: 'Active Environment',
-    isLoading: 'Loading State',
-  },
-  settings: {
-    theme: 'Theme',
-    fontSize: 'Font Size',
-    tabSize: 'Tab Size',
-    wordWrap: 'Word Wrap',
-    autoFormatJson: 'Auto Format JSON',
-    language: 'Language',
-    autoSave: 'Auto Save',
-    sendAnalytics: 'Analytics',
-    sidebarVisible: 'Sidebar',
-  },
-};
-
-// Store category mappings
-const STORE_CATEGORIES: Record<StoreName, EventCategory> = {
-  request: 'request',
-  collection: 'collection',
-  environment: 'environment',
-  settings: 'settings',
-};
 
 class StoreBehaviorTracker {
   private unsubscribers: Map<StoreName, () => void> = new Map();
@@ -110,7 +68,7 @@ class StoreBehaviorTracker {
    */
   private trackStore(
     storeName: StoreName,
-    store: { subscribe: (selector: () => unknown) => (() => void); getState: () => Record<string, unknown> }
+    store: { subscribe: (selector: () => unknown) => (() => void); getState: () => Record<string, unknown> | Partial<Record<string, unknown>> }
   ): void {
     // Initialize previous state
     this.previousStates.set(storeName, { ...store.getState() });
@@ -179,9 +137,6 @@ class StoreBehaviorTracker {
    * Track a store change in the behavior tracker
    */
   private trackStoreChange(storeName: StoreName, field: string, value: unknown): void {
-    const category = STORE_CATEGORIES[storeName];
-    const fieldLabel = STORE_FIELD_LABELS[storeName]?.[field] || field;
-
     // Track based on store type and field
     switch (storeName) {
       case 'request':
@@ -337,7 +292,6 @@ class StoreBehaviorTracker {
    * Track settings store changes
    */
   private trackSettingsStoreChange(field: string, value: unknown): void {
-    const fieldLabel = STORE_FIELD_LABELS.settings[field] || field;
     behaviorTracker.trackSettings(field, value);
   }
 
@@ -420,30 +374,11 @@ export function wrapStoreAction<T extends (...args: unknown[]) => unknown>(
   action: T
 ): T {
   return ((...args: unknown[]) => {
-    const state = (() => {
-      switch (storeName) {
-        case 'request':
-          return useRequestStore.getState();
-        case 'collection':
-          return useCollectionStore.getState();
-        case 'environment':
-          return useEnvironmentStore.getState();
-        case 'settings':
-          return useSettingsStore.getState();
-      }
-    })();
-
-    // Record previous values for tracked fields
-    const previousValues: Record<string, unknown> = {};
-    if (typeof args[0] === 'object' && args[0] !== null) {
-      Object.assign(previousValues, args[0] as Record<string, unknown>);
-    }
-
     // Execute the action
     const result = action(...args);
 
     // Track the change
-    storeBehaviorTracker.trackFieldChange(storeName, actionName, previousValues, result);
+    storeBehaviorTracker.trackFieldChange(storeName, actionName, args, result);
 
     return result;
   }) as T;

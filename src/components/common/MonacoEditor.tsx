@@ -78,7 +78,7 @@ export function MonacoEditor({
     if (!editorRef.current) return;
 
     const isDark = theme === "dark" || (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
-    const monaco = (window as any).monaco;
+    const monaco = (window as Window & { monaco?: { editor: { setTheme: (theme: string) => void } } }).monaco;
     if (monaco) {
       monaco.editor.setTheme(isDark ? "openman-dark" : "openman-light");
     }

@@ -247,6 +247,7 @@ describe('trackerIntegration', () => {
             id: 'col-1',
             name: 'Test Collection',
             description: '',
+            variables: [],
             items: [],
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
@@ -274,6 +275,7 @@ describe('trackerIntegration', () => {
             id: 'col-1',
             name: 'Test Collection',
             description: '',
+            variables: [],
             items: [],
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
@@ -314,6 +316,7 @@ describe('trackerIntegration', () => {
           {
             id: 'env-1',
             name: 'Test Environment',
+            isActive: false,
             variables: [],
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
@@ -418,6 +421,7 @@ describe('trackerIntegration', () => {
           {
             id: 'env-1',
             name: 'Production',
+            isActive: false,
             variables: [{ key: 'BASE_URL', value: 'https://api.example.com', enabled: true }],
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
@@ -451,14 +455,15 @@ describe('trackerIntegration', () => {
     it('should not track unchanged values', () => {
       initBehaviorTracking();
 
-      const initialCount = behaviorTracker.trackSettings.mock.calls.length;
+      const trackSettingsMock = vi.mocked(behaviorTracker.trackSettings);
+      const initialCount = trackSettingsMock.mock.calls.length;
 
       // Set the same value
       useSettingsStore.getState().setFontSize(14);
       useSettingsStore.getState().setAutoSave(true);
 
       // Should not have tracked (values didn't change from initial state)
-      expect(behaviorTracker.trackSettings.mock.calls.length).toBe(initialCount);
+      expect(trackSettingsMock.mock.calls.length).toBe(initialCount);
     });
   });
 });

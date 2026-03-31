@@ -150,7 +150,7 @@ export function Sidebar() {
     draggedRequestRef.current = { request, sourceCollectionId };
   };
 
-  const handleDragEnd = (_e: React.DragEvent) => {
+  const handleDragEnd = () => {
     console.log("[DND] Drag ended");
     draggedRequestRef.current = null;
     setDragOverCollectionId(null);

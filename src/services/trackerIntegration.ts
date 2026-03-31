@@ -23,6 +23,18 @@ import type { HttpRequest, HttpResponse } from '../stores/useRequestStore';
 import type { Collection } from '../stores/useCollectionStore';
 import type { Environment } from '../stores/useEnvironmentStore';
 
+// Type for settings state (only serializable fields)
+type SettingsSerializableState = {
+  fontSize: number;
+  tabSize: number;
+  wordWrap: boolean;
+  autoFormatJson: boolean;
+  language: string;
+  autoSave: boolean;
+  sendAnalytics: boolean;
+  sidebarVisible: boolean;
+};
+
 // Store change listeners
 let requestStoreUnsubscribe: (() => void) | null = null;
 let collectionStoreUnsubscribe: (() => void) | null = null;
@@ -33,7 +45,7 @@ let settingsStoreUnsubscribe: (() => void) | null = null;
 let previousRequestState: { currentRequest: Partial<HttpRequest> | null; response: HttpResponse | null } | null = null;
 let previousCollectionState: { collections: Collection[]; activeCollection: Collection | null } | null = null;
 let previousEnvironmentState: { environments: Environment[]; activeEnvironment: Environment | null } | null = null;
-let previousSettingsState: Record<string, unknown> | null = null;
+let previousSettingsState: SettingsSerializableState | null = null;
 
 /**
  * Initialize behavior tracking for all stores
@@ -59,7 +71,16 @@ export function initBehaviorTracking(): void {
   };
 
   const settingsState = useSettingsStore.getState();
-  previousSettingsState = { ...settingsState };
+  previousSettingsState = {
+    fontSize: settingsState.fontSize,
+    tabSize: settingsState.tabSize,
+    wordWrap: settingsState.wordWrap,
+    autoFormatJson: settingsState.autoFormatJson,
+    language: settingsState.language,
+    autoSave: settingsState.autoSave,
+    sendAnalytics: settingsState.sendAnalytics,
+    sidebarVisible: settingsState.sidebarVisible,
+  };
 
   // Subscribe to request store
   requestStoreUnsubscribe = useRequestStore.subscribe((state) => {
@@ -90,8 +111,18 @@ export function initBehaviorTracking(): void {
 
   // Subscribe to settings store
   settingsStoreUnsubscribe = useSettingsStore.subscribe((state) => {
-    trackSettingsChanges(state, previousSettingsState);
-    previousSettingsState = { ...state };
+    const currentState: SettingsSerializableState = {
+      fontSize: state.fontSize,
+      tabSize: state.tabSize,
+      wordWrap: state.wordWrap,
+      autoFormatJson: state.autoFormatJson,
+      language: state.language,
+      autoSave: state.autoSave,
+      sendAnalytics: state.sendAnalytics,
+      sidebarVisible: state.sidebarVisible,
+    };
+    trackSettingsChanges(currentState, previousSettingsState);
+    previousSettingsState = currentState;
   });
 
   // Start session
@@ -285,20 +316,17 @@ function trackEnvironmentStoreChanges(
  * Track settings changes
  */
 function trackSettingsChanges(
-  currentState: Record<string, unknown>,
-  previousState: Record<string, unknown> | null
+  currentState: SettingsSerializableState,
+  previousState: SettingsSerializableState | null
 ): void {
   if (!previousState) return;
 
   // Track individual setting changes
-  const settingsFields = ['theme', 'fontSize', 'tabSize', 'wordWrap', 'autoFormatJson', 'language', 'autoSave', 'sendAnalytics', 'sidebarVisible'];
+  const settingsFields: (keyof SettingsSerializableState)[] = ['fontSize', 'tabSize', 'wordWrap', 'autoFormatJson', 'language', 'autoSave', 'sendAnalytics', 'sidebarVisible'];
 
   settingsFields.forEach((field) => {
     if (currentState[field] !== previousState[field]) {
       switch (field) {
-        case 'theme':
-          behaviorTracker.trackSettings('theme', currentState[field]);
-          break;
         case 'fontSize':
           behaviorTracker.trackSettings('fontSize', currentState[field]);
           break;

@@ -12,7 +12,6 @@ import {
   loadApp,
   sidebar,
   mainContent,
-  MOCK_COLLECTIONS,
 } from './fixtures/tauri-mock';
 
 test.describe('Sidebar', () => {

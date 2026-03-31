@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 // Define types locally to avoid importing the module
 type StoreName = 'request' | 'collection' | 'environment' | 'settings';

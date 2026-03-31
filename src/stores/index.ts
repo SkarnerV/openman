@@ -18,6 +18,10 @@ export type { Collection, HttpRequest as CollectionRequest } from "./useCollecti
 export { useEnvironmentStore } from "./useEnvironmentStore";
 export type { Environment, EnvironmentVariable } from "./useEnvironmentStore";
 
+export { useSettingsStore } from "./useSettingsStore";
+
+export { useThemeStore } from "./useThemeStore";
+
 // Re-export types from storage service
 export type {
   Workspace,

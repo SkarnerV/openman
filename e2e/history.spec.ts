@@ -14,7 +14,6 @@ import {
   loadApp,
   mainContent,
   navigateToRequestBuilder,
-  MOCK_HTTP_RESPONSE,
 } from './fixtures/tauri-mock';
 
 test.describe('History Page', () => {

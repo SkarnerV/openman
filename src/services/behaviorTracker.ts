@@ -296,11 +296,11 @@ class BehaviorTracker {
     this.trackEvent('request', action, {
       label: `${requestData?.method || 'REQUEST'} ${requestData?.url || ''}`.trim(),
       value: requestData?.status,
-      duration: requestData?.duration,
       metadata: {
         method: requestData?.method,
         url: requestData?.url,
         status: requestData?.status,
+        duration: requestData?.duration,
       },
     });
   }

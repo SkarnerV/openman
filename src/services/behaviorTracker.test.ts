@@ -1,10 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import {
-  behaviorTracker,
-  BehaviorEvent,
-  EventCategory,
-  EventAction,
-} from './behaviorTracker';
+import { behaviorTracker } from './behaviorTracker';
 
 // Create a mutable state for mocking
 const mockSendAnalytics = { current: true };
@@ -228,7 +223,7 @@ describe('behaviorTracker', () => {
         expect(requestEvent.category).toBe('request');
         expect(requestEvent.action).toBe('send_request');
         expect(requestEvent.label).toBe('POST /api/users');
-        expect(requestEvent.duration).toBe(150);
+        expect(requestEvent.metadata?.duration).toBe(150);
         expect(requestEvent.metadata?.status).toBe(201);
       });
 
