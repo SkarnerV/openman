@@ -1,0 +1,27 @@
+---
+name: Question
+about: Ask a question about Openman
+title: '[Question]: '
+labels: ['question']
+assignees: []
+---
+
+## Question
+
+A clear and concise description of your question.
+
+## Context
+
+Provide any relevant context that might help us understand your question better.
+
+## What I've Tried
+
+Describe any attempts you've made to find an answer yourself.
+
+## Documentation Checked
+
+List any documentation you've already reviewed.
+
+## Additional Information
+
+Add any other information that might be helpful.
