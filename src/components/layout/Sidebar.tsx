@@ -102,11 +102,35 @@ export function Sidebar() {
 
   const handleDeleteCollection = async (collectionId: string) => {
     await deleteCollection(collectionId);
+
+    // If the current request belongs to the deleted collection, clear it
+    const { sourceCollectionId } = useRequestStore.getState();
+    if (sourceCollectionId === collectionId) {
+      setCurrentRequest(null);
+      setResponse(null);
+      setError(null);
+      clearSourceContext();
+      // Navigate to collections page
+      navigate("/");
+    }
+
     setDeleteConfirm(null);
   };
 
   const handleDeleteRequest = async (collectionId: string, requestId: string) => {
     await deleteRequestFromCollection(collectionId, requestId);
+
+    // If the deleted request is currently displayed, clear it
+    const { currentRequest, sourceRequestId } = useRequestStore.getState();
+    if (currentRequest?.id === requestId || sourceRequestId === requestId) {
+      setCurrentRequest(null);
+      setResponse(null);
+      setError(null);
+      clearSourceContext();
+      // Navigate to collections page since the current request no longer exists
+      navigate("/");
+    }
+
     setDeleteConfirm(null);
   };
 
