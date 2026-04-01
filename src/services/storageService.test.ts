@@ -425,14 +425,15 @@ describe("storageService", () => {
     });
 
     describe("exportPostmanCollection", () => {
-      it("calls export_postman_collection command with collectionId", async () => {
+      it("calls export_postman_collection command with workspaceId and collectionId", async () => {
         const mockExport = JSON.stringify({ info: { name: "Test" }, item: [] });
 
         invokeMock.mockResolvedValue(mockExport);
 
-        const result = await exportPostmanCollection("col-1");
+        const result = await exportPostmanCollection("workspace-1", "col-1");
 
         expect(invokeMock).toHaveBeenCalledWith("export_postman_collection", {
+          workspaceId: "workspace-1",
           collectionId: "col-1",
         });
         expect(result).toBe(mockExport);

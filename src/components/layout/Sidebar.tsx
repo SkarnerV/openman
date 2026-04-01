@@ -10,12 +10,16 @@ import {
   GripVertical,
   Copy,
   Loader2,
+  Upload,
+  Download,
 } from "lucide-react";
 import { useCollectionStore, type Collection } from "../../stores/useCollectionStore";
 import { useRequestStore, type HttpRequest } from "../../stores/useRequestStore";
 import { type CollectionItem, type RequestCollectionItem } from "../../services/storageService";
 import { CreateCollectionModal } from "../common/CreateCollectionModal";
 import { ConfirmDialog } from "../common/ConfirmDialog";
+import { ImportModal } from "../common/ImportModal";
+import { ExportModal } from "../common/ExportModal";
 import { useSettingsStore } from "../../stores/useSettingsStore";
 
 export function Sidebar() {
@@ -23,6 +27,8 @@ export function Sidebar() {
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedCollections, setExpandedCollections] = useState<Record<string, boolean>>({});
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [exportCollection, setExportCollection] = useState<Collection | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<{
     type: "collection" | "request";
     collectionId: string;
@@ -31,7 +37,7 @@ export function Sidebar() {
   } | null>(null);
   const { sidebarVisible } = useSettingsStore();
 
-  const { collections, createCollection, deleteCollection, deleteRequestFromCollection, moveRequest, duplicateRequest, isLoading } = useCollectionStore();
+  const { collections, createCollection, deleteCollection, deleteRequestFromCollection, moveRequest, duplicateRequest, duplicateCollection, isLoading } = useCollectionStore();
   const { setCurrentRequest, setResponse, setError, setSourceContext, clearSourceContext } = useRequestStore();
 
   // Drag and drop refs (using refs instead of state to avoid re-renders during drag)
@@ -67,6 +73,14 @@ export function Sidebar() {
       await duplicateRequest(collectionId, requestId);
     } catch (err) {
       console.error("Failed to duplicate request:", err);
+    }
+  };
+
+  const handleDuplicateCollection = async (collectionId: string) => {
+    try {
+      await duplicateCollection(collectionId);
+    } catch (err) {
+      console.error("Failed to duplicate collection:", err);
     }
   };
 
@@ -246,6 +260,15 @@ export function Sidebar() {
         onClose={() => setIsCreateModalOpen(false)}
         onCreate={handleCreateCollection}
       />
+      <ImportModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+      />
+      <ExportModal
+        isOpen={exportCollection !== null}
+        onClose={() => setExportCollection(null)}
+        collection={exportCollection}
+      />
       <ConfirmDialog
         isOpen={deleteConfirm !== null}
         title={deleteConfirm?.type === "collection" ? "Delete Collection" : "Delete Request"}
@@ -310,13 +333,22 @@ export function Sidebar() {
           <span className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
             Collections
           </span>
-          <button
-            onClick={() => setIsCreateModalOpen(true)}
-            className="p-1 hover:bg-elevated-bg rounded transition-colors"
-            title="New Collection"
-          >
-            <Plus className="w-3 h-3 text-text-secondary" />
-          </button>
+          <div className="flex gap-1">
+            <button
+              onClick={() => setIsImportModalOpen(true)}
+              className="p-1 hover:bg-elevated-bg rounded transition-colors"
+              title="Import"
+            >
+              <Upload className="w-3 h-3 text-text-secondary" />
+            </button>
+            <button
+              onClick={() => setIsCreateModalOpen(true)}
+              className="p-1 hover:bg-elevated-bg rounded transition-colors"
+              title="New Collection"
+            >
+              <Plus className="w-3 h-3 text-text-secondary" />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -343,6 +375,8 @@ export function Sidebar() {
                   collectionId: collection.id,
                   name: collection.name,
                 })}
+                onExport={() => setExportCollection(collection)}
+                onDuplicate={() => handleDuplicateCollection(collection.id)}
                 onSelectRequest={handleSelectRequest}
                 onDeleteRequest={(requestId, requestName) => setDeleteConfirm({
                   type: "request",
@@ -377,6 +411,8 @@ interface CollectionItemProps {
   isExpanded: boolean;
   onToggle: () => void;
   onDelete: () => void;
+  onExport: () => void;
+  onDuplicate: () => void;
   onSelectRequest: (request: HttpRequest, collectionId: string) => void;
   onDeleteRequest: (requestId: string, requestName: string) => void;
   onDuplicateRequest: (requestId: string) => void;
@@ -399,6 +435,8 @@ function CollectionItem({
   isExpanded,
   onToggle,
   onDelete,
+  onExport,
+  onDuplicate,
   onSelectRequest,
   onDeleteRequest,
   onDuplicateRequest,
@@ -449,6 +487,26 @@ function CollectionItem({
         <span className="text-xs text-text-secondary">
           {collection.items.length}
         </span>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onExport();
+          }}
+          className="p-1 opacity-0 group-hover:opacity-100 hover:bg-card-bg rounded transition-opacity"
+          title="Export"
+        >
+          <Download className="w-3 h-3 text-text-secondary hover:text-accent-teal" />
+        </button>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onDuplicate();
+          }}
+          className="p-1 opacity-0 group-hover:opacity-100 hover:bg-card-bg rounded transition-opacity"
+          title="Duplicate"
+        >
+          <Copy className="w-3 h-3 text-text-secondary hover:text-accent-teal" />
+        </button>
         <button
           onClick={(e) => {
             e.stopPropagation();

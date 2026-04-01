@@ -114,7 +114,10 @@ pub fn import_postman_collection(
 }
 
 #[command]
-pub fn export_postman_collection(collection_id: String) -> Result<String, String> {
-    crate::utils::import_export::export_postman_collection(&collection_id)
+pub fn export_postman_collection(
+    workspace_id: String,
+    collection_id: String,
+) -> Result<String, String> {
+    crate::utils::import_export::export_postman_collection(&workspace_id, &collection_id)
         .map_err(|e| e.to_string())
 }

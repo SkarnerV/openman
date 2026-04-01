@@ -42,6 +42,7 @@ interface CollectionState {
   createCollection: (name: string, description?: string) => Promise<Collection>;
   updateCollection: (id: string, updates: Partial<Collection>) => Promise<void>;
   deleteCollection: (id: string) => Promise<void>;
+  duplicateCollection: (collectionId: string) => Promise<void>;
   setActiveCollection: (collection: Collection | null) => void;
   setSelectedRequest: (request: HttpRequest | null) => void;
   addRequestToCollection: (collectionId: string, request: HttpRequest) => Promise<void>;
@@ -123,6 +124,34 @@ export const useCollectionStore = create<CollectionState>((set, get) => ({
       collections: state.collections.filter((c) => c.id !== id),
       activeCollection:
         state.activeCollection?.id === id ? null : state.activeCollection,
+    }));
+  },
+
+  duplicateCollection: async (collectionId: string) => {
+    const workspaceId = useWorkspaceStore.getState().currentWorkspace?.id;
+    if (!workspaceId) throw new Error("No workspace selected");
+
+    const collection = get().collections.find((c) => c.id === collectionId);
+    if (!collection) throw new Error("Collection not found");
+
+    // Create a copy with new ID and "(Copy)" suffix
+    const duplicatedCollection = await createCollectionApi(
+      workspaceId,
+      `${collection.name} (Copy)`,
+      collection.description
+    );
+
+    // Deep clone items with new IDs
+    const clonedItems = collection.items.map((item) => {
+      return regenerateItemIds(item);
+    });
+
+    // Update with cloned items
+    const updated = { ...duplicatedCollection, items: clonedItems };
+    await updateCollectionApi(workspaceId, updated);
+
+    set((state) => ({
+      collections: [...state.collections, updated],
     }));
   },
 
@@ -252,3 +281,28 @@ export const useCollectionStore = create<CollectionState>((set, get) => ({
 
 // Re-export types
 export type { Collection, HttpRequest };
+
+// Helper function to regenerate IDs for duplicated items
+function regenerateItemIds(item: CollectionItem): CollectionItem {
+  const now = new Date().toISOString();
+  const newId = crypto.randomUUID();
+
+  if ("method" in item) {
+    // It's a request
+    return {
+      ...item,
+      id: newId,
+      createdAt: now,
+      updatedAt: now,
+    } as CollectionItem;
+  } else {
+    // It's a nested collection
+    return {
+      ...item,
+      id: newId,
+      items: item.items?.map(regenerateItemIds) || [],
+      createdAt: now,
+      updatedAt: now,
+    } as CollectionItem;
+  }
+}

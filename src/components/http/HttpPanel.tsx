@@ -1,7 +1,8 @@
 import { useState, useCallback } from "react";
-import { Send, Save, Copy, Loader2 } from "lucide-react";
+import { Send, Save, Copy, Loader2, Terminal } from "lucide-react";
 import { useRequestStore } from "../../stores/useRequestStore";
 import { sendHttpRequest } from "../../services/httpService";
+import { generateCurlCommand } from "../../utils/curlParser";
 import type {
   HttpRequest,
   HttpMethod,
@@ -180,6 +181,21 @@ export function HttpPanel() {
           title="Save Request"
         >
           <Save className="w-4 h-4 text-muted-foreground" />
+        </button>
+        <button
+          onClick={() => {
+            const curlCommand = generateCurlCommand({
+              method,
+              url,
+              headers,
+              body: bodyType !== "none" && body ? { mode: bodyType, content: body } : undefined,
+            });
+            navigator.clipboard.writeText(curlCommand);
+          }}
+          className="p-1.5 rounded hover:bg-muted/50"
+          title="Copy as cURL"
+        >
+          <Terminal className="w-4 h-4 text-muted-foreground" />
         </button>
       </div>
 

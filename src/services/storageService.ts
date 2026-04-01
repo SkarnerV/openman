@@ -198,7 +198,8 @@ export async function importPostmanCollection(
 }
 
 export async function exportPostmanCollection(
+  workspaceId: string,
   collectionId: string
 ): Promise<string> {
-  return invoke("export_postman_collection", { collectionId });
+  return invoke("export_postman_collection", { workspaceId, collectionId });
 }
