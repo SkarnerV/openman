@@ -12,6 +12,7 @@ import {
   Loader2,
   Upload,
   Download,
+  Clock,
 } from "lucide-react";
 import { useCollectionStore, type Collection } from "../../stores/useCollectionStore";
 import { useRequestStore, type HttpRequest } from "../../stores/useRequestStore";
@@ -38,7 +39,7 @@ export function Sidebar() {
   const { sidebarVisible } = useSettingsStore();
 
   const { collections, createCollection, deleteCollection, deleteRequestFromCollection, moveRequest, duplicateRequest, duplicateCollection, isLoading } = useCollectionStore();
-  const { setCurrentRequest, setResponse, setError, setSourceContext, clearSourceContext } = useRequestStore();
+  const { setCurrentRequest, setResponse, setError, setSourceContext, clearSourceContext, requestHistory } = useRequestStore();
 
   // Drag and drop refs (using refs instead of state to avoid re-renders during drag)
   const draggedRequestRef = useRef<{
@@ -326,6 +327,49 @@ export function Sidebar() {
           New Request
         </button>
       </div>
+
+      {/* History Section */}
+      {requestHistory.length > 0 && (
+        <div className="px-3 mb-2">
+          <div className="flex items-center justify-between py-2">
+            <span className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
+              History
+            </span>
+            <button
+              onClick={() => {
+                // Clear history
+                useRequestStore.getState().clearHistory();
+              }}
+              className="text-xs text-text-tertiary hover:text-text-secondary"
+            >
+              Clear
+            </button>
+          </div>
+          <div className="space-y-0.5 max-h-40 overflow-auto">
+            {requestHistory.slice(0, 10).map((request, index) => (
+              <button
+                key={`${request.id}-${index}`}
+                onClick={() => {
+                  setCurrentRequest(request);
+                  setResponse(null);
+                  setError(null);
+                  clearSourceContext();
+                  navigate("/request");
+                }}
+                className="w-full flex items-center gap-2 py-1.5 px-2 rounded hover:bg-elevated-bg transition-colors text-left"
+              >
+                <Clock className="w-3 h-3 text-text-tertiary shrink-0" />
+                <span className={`font-mono text-xs font-semibold ${getMethodColor(request.method)}`}>
+                  {request.method}
+                </span>
+                <span className="text-xs truncate flex-1 text-text-secondary">
+                  {request.name || request.url}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Collections Section */}
       <div className="px-3 mb-2">

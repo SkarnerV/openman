@@ -48,6 +48,8 @@ pub fn run() {
             // Import/Export
             commands::storage::import_postman_collection,
             commands::storage::export_postman_collection,
+            commands::storage::import_environment,
+            commands::storage::export_environment,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

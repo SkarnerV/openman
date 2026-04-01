@@ -121,3 +121,27 @@ pub fn export_postman_collection(
     crate::utils::import_export::export_postman_collection(&workspace_id, &collection_id)
         .map_err(|e| e.to_string())
 }
+
+#[command]
+pub fn export_environment(
+    workspace_id: String,
+    environment_id: String,
+) -> Result<String, String> {
+    let environment = storage::environment::get_environment(&workspace_id, &environment_id)
+        .map_err(|e| e.to_string())?;
+    serde_json::to_string_pretty(&environment).map_err(|e| e.to_string())
+}
+
+#[command]
+pub fn import_environment(
+    workspace_id: String,
+    json: String,
+) -> Result<Environment, String> {
+    let mut environment: Environment = serde_json::from_str(&json).map_err(|e| e.to_string())?;
+    // Generate new ID for the imported environment
+    environment.id = uuid::Uuid::new_v4().to_string();
+    environment.is_active = false;
+    storage::environment::create_environment_with_data(&workspace_id, environment.clone())
+        .map_err(|e| e.to_string())?;
+    Ok(environment)
+}

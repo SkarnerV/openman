@@ -48,6 +48,16 @@ pub fn create_environment(workspace_id: &str, name: &str) -> Result<Environment>
     Ok(environment)
 }
 
+pub fn create_environment_with_data(workspace_id: &str, environment: Environment) -> Result<Environment> {
+    let envs_dir = get_environments_dir(workspace_id)?;
+    fs::create_dir_all(&envs_dir)?;
+
+    let env_file = envs_dir.join(format!("{}.json", environment.id));
+    write_json_file(&env_file, &environment)?;
+
+    Ok(environment)
+}
+
 pub fn get_environment(workspace_id: &str, env_id: &str) -> Result<Environment> {
     let env_file = get_environments_dir(workspace_id)?.join(format!("{}.json", env_id));
     read_json_file(&env_file)

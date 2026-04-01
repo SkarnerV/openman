@@ -203,3 +203,17 @@ export async function exportPostmanCollection(
 ): Promise<string> {
   return invoke("export_postman_collection", { workspaceId, collectionId });
 }
+
+export async function exportEnvironment(
+  workspaceId: string,
+  environmentId: string
+): Promise<string> {
+  return invoke("export_environment", { workspaceId, environmentId });
+}
+
+export async function importEnvironment(
+  workspaceId: string,
+  json: string
+): Promise<Environment> {
+  return invoke("import_environment", { workspaceId, json });
+}

@@ -1,10 +1,14 @@
 import { useState } from "react";
-import { Plus, Globe, Trash2, Copy } from "lucide-react";
+import { Plus, Globe, Trash2, Copy, Download, Upload } from "lucide-react";
+import { open, save } from "@tauri-apps/plugin-dialog";
+import { readFile, writeFile } from "@tauri-apps/plugin-fs";
 import {
   useEnvironmentStore,
   type Environment,
   type EnvironmentVariable,
 } from "../stores/useEnvironmentStore";
+import { useWorkspaceStore } from "../stores/useWorkspaceStore";
+import { exportEnvironment, importEnvironment } from "../services/storageService";
 import { CreateEnvironmentModal } from "../components/common/CreateEnvironmentModal";
 import { ConfirmDialog } from "../components/common/ConfirmDialog";
 import { Checkbox } from "../components/common/Checkbox";
@@ -18,7 +22,10 @@ export function EnvironmentsPage() {
     updateEnvironment,
     deleteEnvironment,
     setActiveEnvironment,
+    loadEnvironments,
   } = useEnvironmentStore();
+
+  const { currentWorkspace } = useWorkspaceStore();
 
   const [selectedEnvId, setSelectedEnvId] = useState<string | null>(
     environments.find((e) => e.isActive)?.id || environments[0]?.id || null,
@@ -97,6 +104,47 @@ export function EnvironmentsPage() {
     }
   };
 
+  const handleExportEnvironment = async (env: Environment) => {
+    if (!currentWorkspace) return;
+
+    try {
+      const json = await exportEnvironment(currentWorkspace.id, env.id);
+      const filePath = await save({
+        defaultPath: `${env.name.replace(/\s+/g, "-")}.environment.json`,
+        filters: [{ name: "JSON", extensions: ["json"] }],
+      });
+
+      if (filePath) {
+        const encoder = new TextEncoder();
+        await writeFile(filePath, encoder.encode(json));
+      }
+    } catch (err) {
+      console.error("Failed to export environment:", err);
+      setError("Failed to export environment");
+    }
+  };
+
+  const handleImportEnvironment = async () => {
+    if (!currentWorkspace) return;
+
+    try {
+      const selected = await open({
+        multiple: false,
+        filters: [{ name: "JSON", extensions: ["json"] }],
+      });
+
+      if (selected) {
+        const content = await readFile(selected as string);
+        const json = new TextDecoder().decode(content);
+        await importEnvironment(currentWorkspace.id, json);
+        await loadEnvironments();
+      }
+    } catch (err) {
+      console.error("Failed to import environment:", err);
+      setError("Failed to import environment");
+    }
+  };
+
   // Loading state
   if (isLoading) {
     return (
@@ -171,13 +219,22 @@ export function EnvironmentsPage() {
         <div className="w-80 bg-card-bg rounded-radius p-5 flex flex-col">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold">Environments</h2>
-            <button
-              onClick={() => setIsCreateModalOpen(true)}
-              className="p-2 hover:bg-elevated-bg rounded-radius transition-colors"
-              title="New Environment"
-            >
-              <Plus className="w-5 h-5 text-accent-orange" />
-            </button>
+            <div className="flex gap-1">
+              <button
+                onClick={handleImportEnvironment}
+                className="p-2 hover:bg-elevated-bg rounded-radius transition-colors"
+                title="Import Environment"
+              >
+                <Upload className="w-4 h-4 text-text-secondary" />
+              </button>
+              <button
+                onClick={() => setIsCreateModalOpen(true)}
+                className="p-2 hover:bg-elevated-bg rounded-radius transition-colors"
+                title="New Environment"
+              >
+                <Plus className="w-5 h-5 text-accent-orange" />
+              </button>
+            </div>
           </div>
           <div className="flex-1 space-y-1 overflow-auto">
             {environments.map((env) => (
@@ -200,6 +257,16 @@ export function EnvironmentsPage() {
                       Active
                     </span>
                   )}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleExportEnvironment(env);
+                    }}
+                    className="p-1 hover:bg-card-bg rounded opacity-0 group-hover:opacity-100"
+                    title="Export"
+                  >
+                    <Download className="w-4 h-4 text-text-secondary hover:text-accent-teal" />
+                  </button>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
