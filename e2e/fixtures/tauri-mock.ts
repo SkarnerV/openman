@@ -191,6 +191,38 @@ export function buildTauriMockScript(overrides: MockOverrides = {}) {
           case 'send_http_request':
             if (_shouldFailRequest) throw new Error('Network error');
             return _httpResponse;
+          // Import/Export commands
+          case 'import_postman_collection':
+            return {
+              id: 'col-imported-' + Date.now(),
+              name: JSON.parse(args?.json || '{}')?.info?.name || 'Imported Collection',
+              description: '',
+              variables: [],
+              items: [],
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            };
+          case 'export_postman_collection':
+            return JSON.stringify({
+              info: { name: 'Exported Collection', schema: 'https://schema.getpostman.com/json/collection/v2.1.0/collection.json' },
+              item: [],
+            });
+          case 'export_environment':
+            return JSON.stringify({
+              id: args?.environmentId,
+              name: 'Exported Environment',
+              isActive: false,
+              variables: [],
+            });
+          case 'import_environment':
+            return {
+              id: 'env-imported-' + Date.now(),
+              name: JSON.parse(args?.json || '{}')?.name || 'Imported Environment',
+              isActive: false,
+              variables: [],
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            };
           default:
             console.warn('[Tauri Mock] Unhandled command:', cmd);
             return null;

@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { Send, Save, Copy, Loader2, Check } from "lucide-react";
+import { Send, Save, Copy, Loader2, Check, Terminal } from "lucide-react";
 import { useRequestStore } from "../stores/useRequestStore";
 import { sendHttpRequest } from "../services/httpService";
 import { SaveRequestModal } from "../components/common/SaveRequestModal";
@@ -8,6 +8,7 @@ import { Checkbox } from "../components/common/Checkbox";
 import { RadioGroup } from "../components/common/RadioGroup";
 import { Select } from "../components/common/Select";
 import { MonacoEditor } from "../components/common/MonacoEditor";
+import { generateCurlCommand } from "../utils/curlParser";
 import type { HttpRequest, HttpMethod, Header, QueryParam, AuthConfig, BodyType } from "../stores/useRequestStore";
 
 // Keyboard shortcuts helper
@@ -297,6 +298,22 @@ export function RequestBuilder() {
           title="Save Request"
         >
           <Save className="w-5 h-5 text-text-secondary" />
+        </button>
+        <button
+          onClick={() => {
+            const curlCommand = generateCurlCommand({
+              method,
+              url,
+              headers,
+              params,
+              body: bodyType !== "none" && body ? { mode: bodyType, content: body } : undefined,
+            });
+            navigator.clipboard.writeText(curlCommand);
+          }}
+          className="p-3 rounded-radius hover:bg-card-bg"
+          title="Copy as cURL"
+        >
+          <Terminal className="w-5 h-5 text-text-secondary" />
         </button>
       </div>
 
