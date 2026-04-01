@@ -45,10 +45,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run unit tests
-        run: npm run test:run
+      - name: Install Playwright browsers for Storybook tests
+        run: npx playwright install chromium
 
-      - name: Generate coverage report
+      - name: Run unit tests with coverage
         run: npm run test:coverage
 
       - name: Upload coverage to Codecov
