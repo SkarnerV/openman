@@ -1,6 +1,7 @@
 pub mod workspace;
 pub mod collection;
 pub mod environment;
+pub mod logging;
 
 use anyhow::Result;
 use std::path::PathBuf;
@@ -10,6 +11,7 @@ pub fn init(app_handle: &AppHandle) -> Result<()> {
     let data_dir = get_data_dir(app_handle)?;
     std::fs::create_dir_all(&data_dir)?;
     std::fs::create_dir_all(data_dir.join("workspaces"))?;
+    logging::init(app_handle)?;
     Ok(())
 }
 

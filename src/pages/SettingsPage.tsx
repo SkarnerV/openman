@@ -153,6 +153,19 @@ function GeneralSettings() {
             onChange={(checked) => setSendAnalytics(checked)}
           />
         </div>
+
+        {/* Version Info */}
+        <div className="flex items-center justify-between py-3 border-t border-elevated-bg mt-6">
+          <div>
+            <h3 className="font-medium">Version</h3>
+            <p className="text-sm text-text-secondary">
+              Openman v0.1.0 - API Testing Tool
+            </p>
+          </div>
+          <span className="px-3 py-1 bg-accent-orange/10 text-accent-orange rounded-radius text-sm font-medium">
+            v0.1.0
+          </span>
+        </div>
       </div>
     </div>
   );

@@ -136,6 +136,7 @@ export function buildTauriMockScript(overrides: MockOverrides = {}) {
       deleteRequestCalls: [],
       updateCollectionCalls: [],
       updateEnvironmentCalls: [],
+      logCalls: [],
     };
 
     window.__TAURI_INTERNALS__ = {
@@ -223,6 +224,25 @@ export function buildTauriMockScript(overrides: MockOverrides = {}) {
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),
             };
+          // Logging commands
+          case 'log_user_action':
+            window.__tauriOperations.logCalls.push({
+              version: args?.version,
+              category: args?.category,
+              action: args?.action,
+              label: args?.label,
+              value: args?.value,
+              metadata: args?.metadata,
+              timestamp: new Date().toISOString(),
+            });
+            return null;
+          case 'get_logs':
+            return [
+              '[2026-04-02T10:00:00Z] v0.1.0 | request | send_request | label: GET https://api.example.com | value: 200 | metadata: none',
+              '[2026-04-02T10:01:00Z] v0.1.0 | collection | create_collection | label: Test Collection | value: none | metadata: none',
+            ];
+          case 'get_log_dates_list':
+            return ['2026-04-02', '2026-04-01'];
           default:
             console.warn('[Tauri Mock] Unhandled command:', cmd);
             return null;

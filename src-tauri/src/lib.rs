@@ -50,6 +50,10 @@ pub fn run() {
             commands::storage::export_postman_collection,
             commands::storage::import_environment,
             commands::storage::export_environment,
+            // Logging commands
+            commands::logging::log_user_action,
+            commands::logging::get_logs,
+            commands::logging::get_log_dates_list,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -13,6 +13,8 @@ import { useEnvironmentStore } from "./stores/useEnvironmentStore";
 import { useThemeStore } from "./stores/useThemeStore";
 import { useSettingsStore } from "./stores/useSettingsStore";
 import { useRequestStore } from "./stores/useRequestStore";
+import { initBehaviorTracking, cleanupBehaviorTracking, behaviorTracker } from "./services/trackerIntegration";
+import { writeLogToFile } from "./services/fileLogger";
 import { Loader2, AlertCircle } from "lucide-react";
 
 function AppContent() {
@@ -29,6 +31,38 @@ function AppContent() {
   useEffect(() => {
     initWorkspace();
   }, [initWorkspace]);
+
+  // Initialize behavior tracking and add console + file logger
+  useEffect(() => {
+    // Add console and file logger for user actions
+    const removeLogger = behaviorTracker.addListener(async (event) => {
+      // Console log
+      console.log(`[Openman v0.1.0] User Action: ${event.category}/${event.action}`, {
+        label: event.label,
+        value: event.value,
+        metadata: event.metadata,
+        timestamp: new Date(event.timestamp).toISOString(),
+      });
+
+      // File log (persists to disk)
+      await writeLogToFile({
+        version: "0.1.0",
+        category: event.category,
+        action: event.action,
+        label: event.label,
+        value: event.value,
+        metadata: event.metadata,
+      });
+    });
+
+    initBehaviorTracking();
+    console.log("[Openman v0.1.0] App initialized - behavior tracking enabled, logs saved to file");
+
+    return () => {
+      removeLogger();
+      cleanupBehaviorTracking();
+    };
+  }, []);
 
   // Apply theme on app load
   useEffect(() => {

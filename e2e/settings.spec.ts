@@ -134,6 +134,25 @@ test.describe('Settings Page', () => {
   });
 
   // ---------------------------------------------------------------------------
+  // Version Display
+  // ---------------------------------------------------------------------------
+  test.describe('Version Display', () => {
+    test('displays version 0.1.0 in settings', async ({ page }) => {
+      await expect(page.locator('text=Version')).toBeVisible();
+      await expect(page.locator('text=Openman v0.1.0')).toBeVisible();
+    });
+
+    test('displays version badge', async ({ page }) => {
+      const versionBadge = page.locator('span:has-text("v0.1.0")');
+      await expect(versionBadge).toBeVisible();
+    });
+
+    test('version section shows API Testing Tool subtitle', async ({ page }) => {
+      await expect(page.locator('text=API Testing Tool')).toBeVisible();
+    });
+  });
+
+  // ---------------------------------------------------------------------------
   // Settings Persistence
   // ---------------------------------------------------------------------------
   test.describe('Settings Persistence', () => {
