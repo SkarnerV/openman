@@ -11,6 +11,10 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
 # Rust / Tauri
 src-tauri/target/
+.tauri-keys.key
+
+# IDE / Editor
+.claude/
 
 # Runtime data
 pids
