@@ -1,15 +1,19 @@
 name: Release
 
 on:
+  # Trigger 1: Manual release creation (existing workflow)
   release:
     types: [published]
-
-env:
-  NODE_VERSION: '20'
+  # Trigger 2: Push version tag for auto-release
+  push:
+    tags:
+      - 'v*'
 
 jobs:
   build-tauri:
     name: Build Tauri App
+    permissions:
+      contents: write
     strategy:
       fail-fast: false
       matrix:
@@ -30,7 +34,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version: lts/*
           cache: 'npm'
 
       - name: Install Rust stable
@@ -42,13 +46,13 @@ jobs:
         if: matrix.platform == 'ubuntu-22.04'
         run: |
           sudo apt-get update
-          sudo apt-get install -y webkit2gtk-4.1 libayatana-appindicator3-dev librsvg2-dev
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf
 
       - name: Install frontend dependencies
         run: npm ci
 
       - name: Build Tauri app
-        uses: tauri-apps/tauri-action@v0
+        uses: tauri-apps/tauri-action@v0.6.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
@@ -60,3 +64,4 @@ jobs:
           releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}
+          releaseAssetNamePattern: 'Openman_{version}_{platform}_{arch}'
