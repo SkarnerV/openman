@@ -9,11 +9,7 @@
  */
 
 import { test, expect } from '@playwright/test';
-import {
-  loadApp,
-  mainContent,
-  sidebar,
-} from './fixtures/tauri-mock';
+import { loadApp } from './fixtures/tauri-mock';
 
 test.describe('Logging System', () => {
   // ---------------------------------------------------------------------------
