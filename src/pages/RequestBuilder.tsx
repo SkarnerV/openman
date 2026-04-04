@@ -184,7 +184,11 @@ export function RequestBuilder() {
     try {
       const result = await sendHttpRequest(request);
       setResponse(result);
-      addToHistory(request);
+      const requestWithResponse = {
+        ...request,
+        lastResponse: result,
+      };
+      addToHistory(requestWithResponse);
     } catch (err) {
       const errorMessage = err instanceof Error 
         ? err.message 
