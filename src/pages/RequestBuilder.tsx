@@ -9,7 +9,7 @@ import { RadioGroup } from "../components/common/RadioGroup";
 import { Select } from "../components/common/Select";
 import { MonacoEditor } from "../components/common/MonacoEditor";
 import { generateCurlCommand } from "../utils/curlParser";
-import type { HttpRequest, HttpMethod, Header, QueryParam, AuthConfig, BodyType } from "../stores/useRequestStore";
+import type { HttpRequest, HttpMethod, Header, QueryParam, AuthConfig, BodyType, HttpResponse } from "../stores/useRequestStore";
 
 // Keyboard shortcuts helper
 function useKeyboardShortcuts(handlers: Record<string, () => void>) {
@@ -40,11 +40,9 @@ export function RequestBuilder() {
     currentRequest,
     response,
     isLoading,
-    error,
     setCurrentRequest,
     setResponse,
     setLoading,
-    setError,
     addToHistory,
   } = useRequestStore();
 
@@ -141,25 +139,33 @@ export function RequestBuilder() {
     }
   }, [url, params, auth]);
 
+  const createErrorResponse = (errorMessage: string): HttpResponse => ({
+    status: 0,
+    statusText: "Error",
+    headers: { "Content-Type": "text/plain" },
+    body: errorMessage,
+    responseTime: 0,
+    responseSize: errorMessage.length,
+  });
+
   const handleSendRequest = useCallback(async () => {
     if (!url) {
-      setError("Please enter a URL");
+      setResponse(createErrorResponse("Please enter a URL"));
       return;
     }
 
     try {
       const urlObj = new URL(url);
       if (!["http:", "https:"].includes(urlObj.protocol)) {
-        setError(`Invalid URL protocol: "${urlObj.protocol}"\nOnly http:// and https:// are supported.`);
+        setResponse(createErrorResponse(`Invalid URL protocol: "${urlObj.protocol}"\n\nOnly http:// and https:// are supported.`));
         return;
       }
     } catch {
-      setError(`Invalid URL format: "${url}"\n\nSuggestions:\n• Make sure the URL starts with http:// or https://\n• Check for typos in the domain name\n• Example: https://api.example.com/users`);
+      setResponse(createErrorResponse(`Invalid URL format: "${url}"\n\nSuggestions:\n• Make sure the URL starts with http:// or https://\n• Check for typos in the domain name\n• Example: https://api.example.com/users`));
       return;
     }
 
     setLoading(true);
-    setError(null);
 
     const finalUrl = buildUrlWithParams();
 
@@ -195,7 +201,7 @@ export function RequestBuilder() {
         : typeof err === 'string' 
           ? err 
           : "An unexpected error occurred while sending the request.\n\nPlease check:\n• Your network connection\n• The URL is correct\n• Any proxy settings if configured";
-      setError(errorMessage);
+      setResponse(createErrorResponse(errorMessage));
     } finally {
       setLoading(false);
     }
@@ -210,7 +216,6 @@ export function RequestBuilder() {
     buildUrlWithParams,
     setCurrentRequest,
     setLoading,
-    setError,
     setResponse,
     addToHistory,
     requestName,
@@ -336,13 +341,6 @@ export function RequestBuilder() {
           <Terminal className="w-5 h-5 text-text-secondary" />
         </button>
       </div>
-
-      {/* Error Display */}
-      {error && (
-        <div className="px-4 py-3 mb-4 bg-delete-method/10 text-delete-method rounded-radius text-sm whitespace-pre-line">
-          {error}
-        </div>
-      )}
 
       {/* Main Content Area */}
       <div className="flex-1 flex gap-4 overflow-hidden">
@@ -719,17 +717,19 @@ export function RequestBuilder() {
             <div className="flex items-center gap-4 mt-4 pt-4 border-t border-elevated-bg text-xs text-text-secondary">
               <span
                 className={`font-medium ${
-                  response.status >= 200 && response.status < 300
-                    ? "text-success"
-                    : response.status >= 400
-                      ? "text-error"
-                      : "text-warning"
+                  response.status === 0
+                    ? "text-error"
+                    : response.status >= 200 && response.status < 300
+                      ? "text-success"
+                      : response.status >= 400
+                        ? "text-error"
+                        : "text-warning"
                 }`}
               >
-                Status: {response.status} {response.statusText}
+                {response.status === 0 ? "Error" : `Status: ${response.status} ${response.statusText}`}
               </span>
-              <span>Time: {response.responseTime} ms</span>
-              <span>Size: {formatResponseSize(response.responseSize)}</span>
+              {response.responseTime > 0 && <span>Time: {response.responseTime} ms</span>}
+              {response.responseSize > 0 && <span>Size: {formatResponseSize(response.responseSize)}</span>}
             </div>
           )}
         </div>

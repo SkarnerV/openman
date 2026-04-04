@@ -8,6 +8,7 @@ import type {
   HttpMethod,
   Header,
   QueryParam,
+  HttpResponse,
 } from "../../stores/useRequestStore";
 
 export function HttpPanel() {
@@ -15,11 +16,9 @@ export function HttpPanel() {
     currentRequest,
     response,
     isLoading,
-    error,
     setCurrentRequest,
     setResponse,
     setLoading,
-    setError,
     addToHistory,
   } = useRequestStore();
 
@@ -72,25 +71,33 @@ export function HttpPanel() {
     }
   };
 
+  const createErrorResponse = (errorMessage: string): HttpResponse => ({
+    status: 0,
+    statusText: "Error",
+    headers: { "Content-Type": "text/plain" },
+    body: errorMessage,
+    responseTime: 0,
+    responseSize: errorMessage.length,
+  });
+
   const handleSendRequest = useCallback(async () => {
     if (!url) {
-      setError("Please enter a URL");
+      setResponse(createErrorResponse("Please enter a URL"));
       return;
     }
 
     try {
       const urlObj = new URL(url);
       if (!["http:", "https:"].includes(urlObj.protocol)) {
-        setError(`Invalid URL protocol: "${urlObj.protocol}"\nOnly http:// and https:// are supported.`);
+        setResponse(createErrorResponse(`Invalid URL protocol: "${urlObj.protocol}"\n\nOnly http:// and https:// are supported.`));
         return;
       }
     } catch {
-      setError(`Invalid URL format: "${url}"\n\nSuggestions:\n• Make sure the URL starts with http:// or https://\n• Check for typos in the domain name\n• Example: https://api.example.com/users`);
+      setResponse(createErrorResponse(`Invalid URL format: "${url}"\n\nSuggestions:\n• Make sure the URL starts with http:// or https://\n• Check for typos in the domain name\n• Example: https://api.example.com/users`));
       return;
     }
 
     setLoading(true);
-    setError(null);
 
     const request: HttpRequest = {
       id: crypto.randomUUID(),
@@ -123,7 +130,7 @@ export function HttpPanel() {
         : typeof err === 'string' 
           ? err 
           : "An unexpected error occurred while sending the request.\n\nPlease check:\n• Your network connection\n• The URL is correct\n• Any proxy settings if configured";
-      setError(errorMessage);
+      setResponse(createErrorResponse(errorMessage));
     } finally {
       setLoading(false);
     }
@@ -136,7 +143,6 @@ export function HttpPanel() {
     bodyType,
     setCurrentRequest,
     setLoading,
-    setError,
     setResponse,
     addToHistory,
   ]);
@@ -253,13 +259,6 @@ export function HttpPanel() {
           <Terminal className="w-4 h-4 text-muted-foreground" />
         </button>
       </div>
-
-      {/* Error Display */}
-      {error && (
-        <div className="px-4 py-2 bg-destructive/10 text-destructive text-sm border-b border-border whitespace-pre-line">
-          {error}
-        </div>
-      )}
 
       {/* Main Content Area */}
       <div className="flex-1 flex overflow-hidden">
@@ -542,19 +541,29 @@ export function HttpPanel() {
             <div className="h-8 flex items-center px-4 border-t border-border text-xs text-muted-foreground">
               <span
                 className={`font-medium ${
-                  response.status >= 200 && response.status < 300
-                    ? "text-green-500"
-                    : response.status >= 400
-                      ? "text-red-500"
-                      : "text-yellow-500"
+                  response.status === 0
+                    ? "text-red-500"
+                    : response.status >= 200 && response.status < 300
+                      ? "text-green-500"
+                      : response.status >= 400
+                        ? "text-red-500"
+                        : "text-yellow-500"
                 }`}
               >
-                Status: {response.status} {response.statusText}
+                {response.status === 0 ? "Error" : `Status: ${response.status} ${response.statusText}`}
               </span>
-              <span className="mx-4">|</span>
-              <span>Time: {response.responseTime} ms</span>
-              <span className="mx-4">|</span>
-              <span>Size: {response.responseSize} B</span>
+              {response.responseTime > 0 && (
+                <>
+                  <span className="mx-4">|</span>
+                  <span>Time: {response.responseTime} ms</span>
+                </>
+              )}
+              {response.responseSize > 0 && (
+                <>
+                  <span className="mx-4">|</span>
+                  <span>Size: {response.responseSize} B</span>
+                </>
+              )}
             </div>
           )}
         </div>
