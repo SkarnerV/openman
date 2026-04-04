@@ -350,12 +350,12 @@ export function Sidebar() {
               <button
                 key={`${request.id}-${index}`}
                 onClick={() => {
-                  setCurrentRequest(request);
-                  setResponse(null);
-                  setError(null);
-                  clearSourceContext();
-                  navigate("/request");
-                }}
+                   setCurrentRequest(request);
+                   setResponse(request.lastResponse || null);
+                   setError(null);
+                   clearSourceContext();
+                   navigate("/request");
+                 }}
                 className="w-full flex items-center gap-2 py-1.5 px-2 rounded hover:bg-elevated-bg transition-colors text-left"
               >
                 <Clock className="w-3 h-3 text-text-tertiary shrink-0" />

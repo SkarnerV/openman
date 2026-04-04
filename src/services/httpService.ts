@@ -1,6 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import type { HttpRequest, HttpResponse } from "../stores";
 import { useEnvironmentStore } from "../stores/useEnvironmentStore";
+import { useWorkspaceStore } from "../stores/useWorkspaceStore";
 
 // Variable substitution - replaces {{variable}} with values from active environment
 function substituteVariables(text: string, variables: Map<string, string>): string {
@@ -72,6 +73,15 @@ interface RustHttpResponse {
   body: string;
   responseTime: number;
   responseSize: number;
+}
+
+interface RustProxySettings {
+  enabled: boolean;
+  host: string;
+  port: number;
+  username?: string;
+  password?: string;
+  noProxy?: string;
 }
 
 function transformRequest(request: HttpRequest, variables: Map<string, string>): RustHttpRequest {
@@ -167,8 +177,21 @@ export async function sendHttpRequest(
 ): Promise<HttpResponse> {
   const variables = getActiveVariables();
   const rustRequest = transformRequest(request, variables);
+  const workspaceProxy = useWorkspaceStore.getState().currentWorkspace?.settings.proxy;
+  const proxy: RustProxySettings | undefined = workspaceProxy
+    ? {
+      enabled: workspaceProxy.enabled,
+      host: workspaceProxy.host,
+      port: workspaceProxy.port,
+      username: workspaceProxy.username,
+      password: workspaceProxy.password,
+      noProxy: workspaceProxy.noProxy,
+    }
+    : undefined;
+
   const response = await invoke<RustHttpResponse>("send_http_request", {
     request: rustRequest,
+    proxy,
   });
   return transformResponse(response);
 }

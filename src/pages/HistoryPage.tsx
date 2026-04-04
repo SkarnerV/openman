@@ -60,7 +60,7 @@ export function HistoryPage() {
   const handleRequestClick = (request: HttpRequest) => {
     // Load the request into the store and navigate to request builder
     setCurrentRequest(request);
-    setResponse(null);
+    setResponse(request.lastResponse || null);
     setError(null);
     navigate("/request");
   };

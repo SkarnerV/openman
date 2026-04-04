@@ -32,6 +32,7 @@ pub fn run() {
             commands::storage::get_workspaces,
             commands::storage::get_default_workspace,
             commands::storage::create_workspace,
+            commands::storage::update_workspace_settings,
             // Collection commands
             commands::storage::get_collections,
             commands::storage::get_collection,

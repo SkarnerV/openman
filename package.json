@@ -17,6 +17,7 @@
     "test:e2e:debug": "playwright test --debug",
     "test:e2e:headed": "playwright test --headed",
     "test:all": "npm run test:run && npm run test:e2e",
+    "test:server": "node test-server.mjs",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
   },

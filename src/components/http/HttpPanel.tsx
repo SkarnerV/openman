@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Send, Save, Copy, Loader2, Terminal } from "lucide-react";
 import { useRequestStore } from "../../stores/useRequestStore";
 import { sendHttpRequest } from "../../services/httpService";
@@ -7,6 +7,7 @@ import type {
   HttpRequest,
   HttpMethod,
   Header,
+  QueryParam,
 } from "../../stores/useRequestStore";
 
 export function HttpPanel() {
@@ -29,6 +30,9 @@ export function HttpPanel() {
   const [url, setUrl] = useState(currentRequest?.url || "");
   const [headers, setHeaders] = useState<Header[]>(
     currentRequest?.headers || [],
+  );
+  const [params, setParams] = useState<QueryParam[]>(
+    currentRequest?.params || [],
   );
   const [body, setBody] = useState<string>(currentRequest?.body?.content || "");
   const [bodyType, setBodyType] = useState<"none" | "json" | "raw">(
@@ -74,6 +78,17 @@ export function HttpPanel() {
       return;
     }
 
+    try {
+      const urlObj = new URL(url);
+      if (!["http:", "https:"].includes(urlObj.protocol)) {
+        setError(`Invalid URL protocol: "${urlObj.protocol}"\nOnly http:// and https:// are supported.`);
+        return;
+      }
+    } catch {
+      setError(`Invalid URL format: "${url}"\n\nSuggestions:\n• Make sure the URL starts with http:// or https://\n• Check for typos in the domain name\n• Example: https://api.example.com/users`);
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -82,6 +97,7 @@ export function HttpPanel() {
       name: url,
       method,
       url,
+      params: params.filter((p) => p.enabled && p.key),
       headers: headers.filter((h) => h.enabled && h.key),
       body:
         bodyType !== "none" && body
@@ -96,15 +112,25 @@ export function HttpPanel() {
     try {
       const result = await sendHttpRequest(request);
       setResponse(result);
-      addToHistory(request);
+      const requestWithResponse: HttpRequest = {
+        ...request,
+        lastResponse: result,
+      };
+      addToHistory(requestWithResponse);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Request failed");
+      const errorMessage = err instanceof Error 
+        ? err.message 
+        : typeof err === 'string' 
+          ? err 
+          : "An unexpected error occurred while sending the request.\n\nPlease check:\n• Your network connection\n• The URL is correct\n• Any proxy settings if configured";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
   }, [
     url,
     method,
+    params,
     headers,
     body,
     bodyType,
@@ -114,6 +140,35 @@ export function HttpPanel() {
     setResponse,
     addToHistory,
   ]);
+
+  useEffect(() => {
+    if (currentRequest) {
+      setMethod(currentRequest.method || "GET");
+      setUrl(currentRequest.url || "");
+      setHeaders(currentRequest.headers || []);
+      setParams(currentRequest.params || []);
+      setBody(currentRequest.body?.content || "");
+      setBodyType((currentRequest.body?.mode as "none" | "json" | "raw") || "none");
+    }
+  }, [currentRequest]);
+
+  const addParam = () => {
+    setParams([...params, { key: "", value: "", enabled: true }]);
+  };
+
+  const updateParam = (
+    index: number,
+    field: keyof QueryParam,
+    value: string | boolean,
+  ) => {
+    const newParams = [...params];
+    newParams[index] = { ...newParams[index], [field]: value };
+    setParams(newParams);
+  };
+
+  const removeParam = (index: number) => {
+    setParams(params.filter((_, i) => i !== index));
+  };
 
   const addHeader = () => {
     setHeaders([...headers, { key: "", value: "", enabled: true }]);
@@ -201,7 +256,7 @@ export function HttpPanel() {
 
       {/* Error Display */}
       {error && (
-        <div className="px-4 py-2 bg-destructive/10 text-destructive text-sm border-b border-border">
+        <div className="px-4 py-2 bg-destructive/10 text-destructive text-sm border-b border-border whitespace-pre-line">
           {error}
         </div>
       )}
@@ -231,11 +286,58 @@ export function HttpPanel() {
           <div className="flex-1 p-4 overflow-auto">
             {activeRequestTab === "params" && (
               <div className="text-sm">
-                <p className="text-muted-foreground mb-2">Query Parameters</p>
-                <p className="text-xs text-muted-foreground">
-                  Add query parameters to the URL. They will be appended to the
-                  URL automatically.
-                </p>
+                <div className="flex justify-between items-center mb-2">
+                  <p className="text-muted-foreground">Query Parameters</p>
+                  <button
+                    onClick={addParam}
+                    className="text-xs text-primary hover:underline"
+                  >
+                    + Add Param
+                  </button>
+                </div>
+                <div className="space-y-2">
+                  {params.map((param, index) => (
+                    <div key={index} className="flex gap-2 items-center">
+                      <input
+                        type="checkbox"
+                        checked={param.enabled}
+                        onChange={(e) =>
+                          updateParam(index, "enabled", e.target.checked)
+                        }
+                        className="w-4 h-4"
+                      />
+                      <input
+                        type="text"
+                        value={param.key}
+                        onChange={(e) =>
+                          updateParam(index, "key", e.target.value)
+                        }
+                        placeholder="Parameter name"
+                        className="flex-1 px-2 py-1 border border-border rounded bg-background text-sm"
+                      />
+                      <input
+                        type="text"
+                        value={param.value}
+                        onChange={(e) =>
+                          updateParam(index, "value", e.target.value)
+                        }
+                        placeholder="Value"
+                        className="flex-1 px-2 py-1 border border-border rounded bg-background text-sm"
+                      />
+                      <button
+                        onClick={() => removeParam(index)}
+                        className="text-muted-foreground hover:text-destructive"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                  {params.length === 0 && (
+                    <p className="text-muted-foreground text-xs">
+                      No params added. Click "Add Param" to add one.
+                    </p>
+                  )}
+                </div>
               </div>
             )}
             {activeRequestTab === "headers" && (

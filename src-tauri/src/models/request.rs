@@ -52,7 +52,7 @@ pub enum RequestBody {
     #[serde(rename = "none")]
     None,
     #[serde(rename = "json")]
-    Json(String),
+    Json { content: String },
     #[serde(rename = "raw")]
     Raw { content: String, language: String },
     #[serde(rename = "form-data")]
@@ -76,9 +76,18 @@ pub struct FormField {
 #[serde(tag = "type", rename_all = "camelCase")]
 pub enum AuthConfig {
     None,
-    Bearer { token: String },
-    Basic { username: String, password: String },
-    ApiKey { key: String, value: String, add_to: String },
+    Bearer {
+        token: String,
+    },
+    Basic {
+        username: String,
+        password: String,
+    },
+    ApiKey {
+        key: String,
+        value: String,
+        add_to: String,
+    },
     OAuth2 {
         grant_type: String,
         access_token_url: Option<String>,

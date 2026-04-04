@@ -147,6 +147,17 @@ export function RequestBuilder() {
       return;
     }
 
+    try {
+      const urlObj = new URL(url);
+      if (!["http:", "https:"].includes(urlObj.protocol)) {
+        setError(`Invalid URL protocol: "${urlObj.protocol}"\nOnly http:// and https:// are supported.`);
+        return;
+      }
+    } catch {
+      setError(`Invalid URL format: "${url}"\n\nSuggestions:\n• Make sure the URL starts with http:// or https://\n• Check for typos in the domain name\n• Example: https://api.example.com/users`);
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -175,7 +186,12 @@ export function RequestBuilder() {
       setResponse(result);
       addToHistory(request);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Request failed");
+      const errorMessage = err instanceof Error 
+        ? err.message 
+        : typeof err === 'string' 
+          ? err 
+          : "An unexpected error occurred while sending the request.\n\nPlease check:\n• Your network connection\n• The URL is correct\n• Any proxy settings if configured";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -319,7 +335,7 @@ export function RequestBuilder() {
 
       {/* Error Display */}
       {error && (
-        <div className="px-4 py-3 mb-4 bg-delete-method/10 text-delete-method rounded-radius text-sm">
+        <div className="px-4 py-3 mb-4 bg-delete-method/10 text-delete-method rounded-radius text-sm whitespace-pre-line">
           {error}
         </div>
       )}

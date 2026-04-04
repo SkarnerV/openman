@@ -19,6 +19,7 @@ pub struct WorkspaceSettings {
     pub theme: String,
     pub font_size: i32,
     pub tab_size: i32,
+    #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub proxy: Option<ProxySettings>,
 }
@@ -44,6 +45,9 @@ pub struct ProxySettings {
     pub username: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub password: Option<String>,
+    #[serde(default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub no_proxy: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

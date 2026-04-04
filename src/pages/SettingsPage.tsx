@@ -1,11 +1,13 @@
 import { useState } from "react";
-import { Settings, PenTool, Keyboard, Moon, Sun, Monitor } from "lucide-react";
+import { Settings, PenTool, Keyboard, Moon, Sun, Monitor, Network } from "lucide-react";
 import { useThemeStore } from "../stores/useThemeStore";
 import { useSettingsStore } from "../stores/useSettingsStore";
+import { useWorkspaceStore } from "../stores/useWorkspaceStore";
+import type { ProxySettings } from "../services/storageService";
 import { Select } from "../components/common/Select";
 import { Checkbox } from "../components/common/Checkbox";
 
-type SettingsSection = "general" | "editor" | "shortcuts";
+type SettingsSection = "general" | "editor" | "network" | "shortcuts";
 
 export function SettingsPage() {
   const [activeSection, setActiveSection] = useState<SettingsSection>("general");
@@ -13,6 +15,7 @@ export function SettingsPage() {
   const sections: { id: SettingsSection; icon: typeof Settings; label: string }[] = [
     { id: "general", icon: Settings, label: "General" },
     { id: "editor", icon: PenTool, label: "Editor" },
+    { id: "network", icon: Network, label: "Network" },
     { id: "shortcuts", icon: Keyboard, label: "Shortcuts" },
   ];
 
@@ -48,6 +51,7 @@ export function SettingsPage() {
       <div className="flex-1 bg-card-bg rounded-radius p-6 overflow-auto">
         {activeSection === "general" && <GeneralSettings />}
         {activeSection === "editor" && <EditorSettings />}
+        {activeSection === "network" && <NetworkSettings />}
         {activeSection === "shortcuts" && <ShortcutsSettings />}
       </div>
     </div>
@@ -241,6 +245,142 @@ function EditorSettings() {
           <Checkbox
             checked={autoFormatJson}
             onChange={(checked) => setAutoFormatJson(checked)}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function NetworkSettings() {
+  const { currentWorkspace, updateSettings } = useWorkspaceStore();
+
+  const proxy: ProxySettings = currentWorkspace?.settings.proxy ?? {
+    enabled: false,
+    host: "",
+    port: 8080,
+    username: "",
+    password: "",
+    noProxy: "",
+  };
+
+  const updateProxy = (updates: Partial<ProxySettings>) => {
+    if (!currentWorkspace) return;
+
+    const nextProxy: ProxySettings = {
+      ...proxy,
+      ...updates,
+    };
+
+    void updateSettings({
+      ...currentWorkspace.settings,
+      proxy: nextProxy,
+    });
+  };
+
+  return (
+    <div>
+      <h2 className="text-xl font-semibold mb-6 font-display">Network Settings</h2>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between py-3 border-b border-elevated-bg">
+          <div>
+            <h3 className="font-medium">Enable Proxy</h3>
+            <p className="text-sm text-text-secondary">
+              Route HTTP requests through a proxy server
+            </p>
+          </div>
+          <Checkbox
+            checked={proxy.enabled}
+            onChange={(checked) => updateProxy({ enabled: checked })}
+          />
+        </div>
+
+        <div className="flex items-center justify-between py-3 border-b border-elevated-bg">
+          <div>
+            <h3 className="font-medium">Proxy Host</h3>
+            <p className="text-sm text-text-secondary">
+              Hostname or IP address of your proxy server
+            </p>
+          </div>
+          <input
+            type="text"
+            value={proxy.host}
+            onChange={(e) => updateProxy({ host: e.target.value })}
+            placeholder="proxy.company.com"
+            disabled={!proxy.enabled}
+            className="w-72 px-4 py-2 bg-elevated-bg rounded-radius text-sm focus:outline-none focus:ring-2 focus:ring-accent-orange disabled:opacity-50"
+          />
+        </div>
+
+        <div className="flex items-center justify-between py-3 border-b border-elevated-bg">
+          <div>
+            <h3 className="font-medium">Proxy Port</h3>
+            <p className="text-sm text-text-secondary">
+              Port used by the proxy server
+            </p>
+          </div>
+          <input
+            type="number"
+            value={proxy.port}
+            onChange={(e) => {
+              const parsedPort = Number(e.target.value);
+              updateProxy({ port: Number.isNaN(parsedPort) ? 0 : parsedPort });
+            }}
+            min={1}
+            max={65535}
+            disabled={!proxy.enabled}
+            className="w-72 px-4 py-2 bg-elevated-bg rounded-radius text-sm focus:outline-none focus:ring-2 focus:ring-accent-orange disabled:opacity-50"
+          />
+        </div>
+
+        <div className="flex items-center justify-between py-3 border-b border-elevated-bg">
+          <div>
+            <h3 className="font-medium">Username</h3>
+            <p className="text-sm text-text-secondary">
+              Optional username for authenticated proxies
+            </p>
+          </div>
+          <input
+            type="text"
+            value={proxy.username ?? ""}
+            onChange={(e) => updateProxy({ username: e.target.value })}
+            placeholder="username"
+            disabled={!proxy.enabled}
+            className="w-72 px-4 py-2 bg-elevated-bg rounded-radius text-sm focus:outline-none focus:ring-2 focus:ring-accent-orange disabled:opacity-50"
+          />
+        </div>
+
+        <div className="flex items-center justify-between py-3 border-b border-elevated-bg">
+          <div>
+            <h3 className="font-medium">Password</h3>
+            <p className="text-sm text-text-secondary">
+              Optional password for authenticated proxies
+            </p>
+          </div>
+          <input
+            type="password"
+            value={proxy.password ?? ""}
+            onChange={(e) => updateProxy({ password: e.target.value })}
+            placeholder="password"
+            disabled={!proxy.enabled}
+            className="w-72 px-4 py-2 bg-elevated-bg rounded-radius text-sm focus:outline-none focus:ring-2 focus:ring-accent-orange disabled:opacity-50"
+          />
+        </div>
+
+        <div className="flex items-center justify-between py-3">
+          <div>
+            <h3 className="font-medium">Bypass List (no_proxy)</h3>
+            <p className="text-sm text-text-secondary">
+              Comma-separated hosts that should bypass the proxy
+            </p>
+          </div>
+          <input
+            type="text"
+            value={proxy.noProxy ?? ""}
+            onChange={(e) => updateProxy({ noProxy: e.target.value })}
+            placeholder="localhost,127.0.0.1,.internal.company.com"
+            disabled={!proxy.enabled}
+            className="w-72 px-4 py-2 bg-elevated-bg rounded-radius text-sm focus:outline-none focus:ring-2 focus:ring-accent-orange disabled:opacity-50"
           />
         </div>
       </div>

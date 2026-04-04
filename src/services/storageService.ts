@@ -22,6 +22,16 @@ export interface WorkspaceSettings {
   theme: string;
   fontSize: number;
   tabSize: number;
+  proxy?: ProxySettings;
+}
+
+export interface ProxySettings {
+  enabled: boolean;
+  host: string;
+  port: number;
+  username?: string;
+  password?: string;
+  noProxy?: string;
 }
 
 export interface Collection {
@@ -113,6 +123,13 @@ export async function createWorkspace(
   description?: string
 ): Promise<Workspace> {
   return invoke("create_workspace", { name, description });
+}
+
+export async function updateWorkspaceSettings(
+  workspaceId: string,
+  settings: WorkspaceSettings
+): Promise<void> {
+  return invoke("update_workspace_settings", { workspaceId, settings });
 }
 
 // Collection operations

@@ -1,5 +1,5 @@
 use crate::models::collection::{Collection, CollectionItem, Variable};
-use crate::models::request::{AuthConfig, Header, HttpRequest, HttpMethod, RequestBody};
+use crate::models::request::{AuthConfig, Header, HttpMethod, HttpRequest, RequestBody};
 use crate::storage::collection::{create_collection, get_collection, update_collection};
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
@@ -92,11 +92,15 @@ pub struct PostmanVariable {
 }
 
 pub fn import_postman_collection(workspace_id: &str, json: &str) -> Result<Collection> {
-    let postman: PostmanCollection = serde_json::from_str(json)
-        .context("Failed to parse Postman collection JSON")?;
+    let postman: PostmanCollection =
+        serde_json::from_str(json).context("Failed to parse Postman collection JSON")?;
 
     let collection = convert_postman_to_collection(&postman)?;
-    create_collection(workspace_id, &collection.name, collection.description.as_deref())?;
+    create_collection(
+        workspace_id,
+        &collection.name,
+        collection.description.as_deref(),
+    )?;
 
     // Now update with all items
     let saved = get_collection(workspace_id, &collection.id)?;
@@ -215,7 +219,9 @@ fn convert_postman_request(name: &str, request: &PostmanRequest) -> HttpRequest 
         match b.mode.as_str() {
             "raw" => b.raw.as_ref().map(|content| {
                 // Try to detect if it's JSON
-                RequestBody::Json(content.clone())
+                RequestBody::Json {
+                    content: content.clone(),
+                }
             }),
             _ => None,
         }
@@ -268,10 +274,7 @@ fn convert_variable(v: &PostmanVariable) -> Variable {
     }
 }
 
-fn extract_auth_value(
-    auth_list: &Option<Vec<serde_json::Value>>,
-    key: &str,
-) -> Option<String> {
+fn extract_auth_value(auth_list: &Option<Vec<serde_json::Value>>, key: &str) -> Option<String> {
     auth_list.as_ref().and_then(|list| {
         list.iter().find_map(|item| {
             if let Some(obj) = item.as_object() {
@@ -289,18 +292,29 @@ fn convert_collection_to_postman(collection: &Collection) -> PostmanCollection {
         info: PostmanInfo {
             name: collection.name.clone(),
             description: collection.description.clone(),
-            schema: "https://schema.getpostman.com/json/collection/v2.1.0/collection.json".to_string(),
+            schema: "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+                .to_string(),
         },
-        item: collection.items.iter().map(|item| convert_collection_item_to_postman(item)).collect(),
+        item: collection
+            .items
+            .iter()
+            .map(|item| convert_collection_item_to_postman(item))
+            .collect(),
         variable: if collection.variables.is_empty() {
             None
         } else {
-            Some(collection.variables.iter().map(|v| PostmanVariable {
-                key: v.key.clone(),
-                value: v.value.clone(),
-                description: v.description.clone(),
-                var_type: Some(v.var_type.clone()),
-            }).collect())
+            Some(
+                collection
+                    .variables
+                    .iter()
+                    .map(|v| PostmanVariable {
+                        key: v.key.clone(),
+                        value: v.value.clone(),
+                        description: v.description.clone(),
+                        var_type: Some(v.var_type.clone()),
+                    })
+                    .collect(),
+            )
         },
     }
 }
@@ -314,7 +328,13 @@ fn convert_collection_item_to_postman(item: &CollectionItem) -> PostmanItem {
         },
         CollectionItem::Collection(nested) => PostmanItem {
             name: nested.name.clone(),
-            item: Some(nested.items.iter().map(|i| convert_collection_item_to_postman(i)).collect()),
+            item: Some(
+                nested
+                    .items
+                    .iter()
+                    .map(|i| convert_collection_item_to_postman(i))
+                    .collect(),
+            ),
             request: None,
         },
     }
@@ -339,12 +359,18 @@ fn convert_request_to_postman(request: &HttpRequest) -> PostmanRequest {
         header: if request.headers.is_empty() {
             None
         } else {
-            Some(request.headers.iter().map(|h| PostmanHeader {
-                key: h.key.clone(),
-                value: h.value.clone(),
-                description: h.description.clone(),
-                disabled: if h.enabled { None } else { Some(true) },
-            }).collect())
+            Some(
+                request
+                    .headers
+                    .iter()
+                    .map(|h| PostmanHeader {
+                        key: h.key.clone(),
+                        value: h.value.clone(),
+                        description: h.description.clone(),
+                        disabled: if h.enabled { None } else { Some(true) },
+                    })
+                    .collect(),
+            )
         },
         body: request.body.as_ref().map(|b| convert_body_to_postman(b)),
         auth: request.auth.as_ref().map(|a| convert_auth_to_postman(a)),
@@ -358,7 +384,7 @@ fn convert_body_to_postman(body: &RequestBody) -> PostmanBody {
             raw: None,
             options: None,
         },
-        RequestBody::Json(content) => PostmanBody {
+        RequestBody::Json { content } => PostmanBody {
             mode: "raw".to_string(),
             raw: Some(content.clone()),
             options: Some(serde_json::json!({
@@ -445,11 +471,13 @@ fn convert_auth_to_postman(auth: &AuthConfig) -> PostmanAuth {
         },
         AuthConfig::OAuth2 { token, .. } => PostmanAuth {
             auth_type: "oauth2".to_string(),
-            bearer: token.as_ref().map(|t| vec![serde_json::json!({
-                "key": "token",
-                "value": t,
-                "type": "string"
-            })]),
+            bearer: token.as_ref().map(|t| {
+                vec![serde_json::json!({
+                    "key": "token",
+                    "value": t,
+                    "type": "string"
+                })]
+            }),
             basic: None,
         },
     }

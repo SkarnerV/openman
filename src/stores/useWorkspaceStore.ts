@@ -3,7 +3,9 @@ import {
   getDefaultWorkspace,
   getWorkspaces,
   createWorkspace as createWorkspaceApi,
+  updateWorkspaceSettings as updateWorkspaceSettingsApi,
   type Workspace,
+  type WorkspaceSettings,
 } from "../services/storageService";
 
 interface WorkspaceState {
@@ -18,6 +20,7 @@ interface WorkspaceState {
   loadWorkspaces: () => Promise<void>;
   setCurrentWorkspace: (workspace: Workspace) => void;
   createWorkspace: (name: string, description?: string) => Promise<Workspace>;
+  updateSettings: (settings: WorkspaceSettings) => Promise<void>;
 }
 
 export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
@@ -65,6 +68,26 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
       workspaces: [...state.workspaces, workspace],
     }));
     return workspace;
+  },
+
+  updateSettings: async (settings: WorkspaceSettings) => {
+    const currentWorkspace = get().currentWorkspace;
+    if (!currentWorkspace) throw new Error("No workspace selected");
+
+    await updateWorkspaceSettingsApi(currentWorkspace.id, settings);
+
+    const updatedWorkspace: Workspace = {
+      ...currentWorkspace,
+      settings,
+      updatedAt: new Date().toISOString(),
+    };
+
+    set((state) => ({
+      currentWorkspace: updatedWorkspace,
+      workspaces: state.workspaces.map((workspace) =>
+        workspace.id === updatedWorkspace.id ? updatedWorkspace : workspace
+      ),
+    }));
   },
 }));
 
