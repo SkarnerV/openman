@@ -1,0 +1,61 @@
+#!/usr/bin/env node
+/**
+ * Prepare release: bump, test, commit, tag
+ * Usage: node scripts/release-prepare.js 0.2.0
+ */
+
+const { execSync } = require('child_process');
+
+const VERSION = process.argv[2];
+if (!VERSION) {
+  console.error('Usage: npm run release:prepare <semver>');
+  process.exit(1);
+}
+
+try {
+  // 1. Check we're on main
+  const branch = execSync('git branch --show-current').toString().trim();
+  if (branch !== 'main') {
+    console.error(`Error: Must be on main branch (currently on ${branch})`);
+    process.exit(1);
+  }
+
+  // 2. Check for uncommitted changes
+  try {
+    execSync('git diff-index --quiet HEAD --');
+  } catch {
+    console.error('Error: Uncommitted changes detected. Commit or stash first.');
+    process.exit(1);
+  }
+
+  // 3. Run version bump
+  console.log(`\n📦 Bumping version to ${VERSION}...`);
+  execSync(`node ${__dirname}/version-bump.js ${VERSION}`, { stdio: 'inherit' });
+
+  // 4. Verify
+  console.log('\n🔍 Verifying version consistency...');
+  execSync(`node ${__dirname}/version-verify.js`, { stdio: 'inherit' });
+
+  // 5. Run tests
+  console.log('\n🧪 Running tests...');
+  execSync('npm run test:all', { stdio: 'inherit' });
+
+  // 6. Commit
+  console.log('\n💾 Committing changes...');
+  execSync('git add -A');
+  execSync(`git commit -m "chore: bump version to ${VERSION}"`);
+
+  // 7. Create tag
+  console.log('\n🏷️  Creating tag...');
+  execSync(`git tag v${VERSION}`);
+
+  console.log(`\n✅ Release v${VERSION} prepared!`);
+  console.log('\nNext steps:');
+  console.log(`  git push origin main`);
+  console.log(`  git push origin v${VERSION}`);
+  console.log('  gh run watch');
+
+} catch (error) {
+  console.error('\n❌ Release preparation failed');
+  process.exit(1);
+}

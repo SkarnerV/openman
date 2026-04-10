@@ -19,7 +19,11 @@
     "test:all": "npm run test:run && npm run test:e2e",
     "test:server": "node test-server.mjs",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "version:bump": "node scripts/version-bump.cjs",
+    "version:verify": "node scripts/version-verify.cjs",
+    "release:check": "node scripts/release-check.cjs",
+    "release:prepare": "node scripts/release-prepare.cjs"
   },
   "keywords": [
     "api-testing",
