@@ -28,7 +28,7 @@ test.describe('Logging System', () => {
 
       // Should see initialization log with version
       expect(consoleMessages.some(msg =>
-        msg.includes('[Openman v0.1.0]')
+        msg.includes('[Openman v0.2.0]')
       )).toBeTruthy();
     });
 
@@ -41,7 +41,7 @@ test.describe('Logging System', () => {
       await loadApp(page);
 
       // Version should appear in logs
-      expect(consoleMessages.some(msg => msg.includes('v0.1.0'))).toBeTruthy();
+      expect(consoleMessages.some(msg => msg.includes('v0.2.0'))).toBeTruthy();
     });
   });
 
@@ -107,7 +107,7 @@ test.describe('Logging System', () => {
       });
 
       expect(logs.length).toBeGreaterThan(0);
-      expect(logs[0]).toContain('v0.1.0');
+      expect(logs[0]).toContain('v0.2.0');
     });
 
     test('log format contains all required fields', async ({ page }) => {
@@ -121,7 +121,7 @@ test.describe('Logging System', () => {
       // Check log format has timestamp, version, category, action
       const log = logs[0];
       expect(log).toMatch(/\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z\]/); // timestamp
-      expect(log).toContain('v0.1.0');
+      expect(log).toContain('v0.2.0');
       expect(log).toContain('|'); // field separators
     });
   });

@@ -139,11 +139,11 @@ test.describe('Settings Page', () => {
   test.describe('Version Display', () => {
     test('displays version 0.1.0 in settings', async ({ page }) => {
       await expect(page.locator('text=Version')).toBeVisible();
-      await expect(page.locator('text=Openman v0.1.0')).toBeVisible();
+      await expect(page.locator('text=Openman v0.2.0')).toBeVisible();
     });
 
     test('displays version badge', async ({ page }) => {
-      const versionBadge = page.locator('span:has-text("v0.1.0")');
+      const versionBadge = page.locator('span:has-text("v0.2.0")');
       await expect(versionBadge).toBeVisible();
     });
 

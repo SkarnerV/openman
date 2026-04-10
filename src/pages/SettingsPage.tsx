@@ -163,11 +163,11 @@ function GeneralSettings() {
           <div>
             <h3 className="font-medium">Version</h3>
             <p className="text-sm text-text-secondary">
-              Openman v0.1.0 - API Testing Tool
+              Openman v0.2.0 - API Testing Tool
             </p>
           </div>
           <span className="px-3 py-1 bg-accent-orange/10 text-accent-orange rounded-radius text-sm font-medium">
-            v0.1.0
+            v0.2.0
           </span>
         </div>
       </div>

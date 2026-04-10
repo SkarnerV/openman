@@ -37,7 +37,7 @@ function AppContent() {
     // Add console and file logger for user actions
     const removeLogger = behaviorTracker.addListener(async (event) => {
       // Console log
-      console.log(`[Openman v0.1.0] User Action: ${event.category}/${event.action}`, {
+      console.log(`[Openman v0.2.0] User Action: ${event.category}/${event.action}`, {
         label: event.label,
         value: event.value,
         metadata: event.metadata,
@@ -56,7 +56,7 @@ function AppContent() {
     });
 
     initBehaviorTracking();
-    console.log("[Openman v0.1.0] App initialized - behavior tracking enabled, logs saved to file");
+    console.log("[Openman v0.2.0] App initialized - behavior tracking enabled, logs saved to file");
 
     return () => {
       removeLogger();

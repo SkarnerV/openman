@@ -205,7 +205,7 @@ export function buildTauriMockScript(overrides: MockOverrides = {}) {
             };
           case 'export_postman_collection':
             return JSON.stringify({
-              info: { name: 'Exported Collection', schema: 'https://schema.getpostman.com/json/collection/v2.1.0/collection.json' },
+              info: { name: 'Exported Collection', schema: 'https://schema.getpostman.com/json/collection/v0.2.0/collection.json' },
               item: [],
             });
           case 'export_environment':
@@ -238,8 +238,8 @@ export function buildTauriMockScript(overrides: MockOverrides = {}) {
             return null;
           case 'get_logs':
             return [
-              '[2026-04-02T10:00:00Z] v0.1.0 | request | send_request | label: GET https://api.example.com | value: 200 | metadata: none',
-              '[2026-04-02T10:01:00Z] v0.1.0 | collection | create_collection | label: Test Collection | value: none | metadata: none',
+              '[2026-04-02T10:00:00Z] v0.2.0 | request | send_request | label: GET https://api.example.com | value: 200 | metadata: none',
+              '[2026-04-02T10:01:00Z] v0.2.0 | collection | create_collection | label: Test Collection | value: none | metadata: none',
             ];
           case 'get_log_dates_list':
             return ['2026-04-02', '2026-04-01'];
