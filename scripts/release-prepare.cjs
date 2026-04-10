@@ -30,11 +30,11 @@ try {
 
   // 3. Run version bump
   console.log(`\n📦 Bumping version to ${VERSION}...`);
-  execSync(`node ${__dirname}/version-bump.js ${VERSION}`, { stdio: 'inherit' });
+  execSync(`node ${__dirname}/version-bump.cjs ${VERSION}`, { stdio: 'inherit' });
 
   // 4. Verify
   console.log('\n🔍 Verifying version consistency...');
-  execSync(`node ${__dirname}/version-verify.js`, { stdio: 'inherit' });
+  execSync(`node ${__dirname}/version-verify.cjs`, { stdio: 'inherit' });
 
   // 5. Run tests
   console.log('\n🧪 Running tests...');
